@@ -36,8 +36,8 @@ export const createTask = async (
 
 export const updateTask = async (
   id: number,
-  data: any
-) => {
+  data: Record<string, unknown>
+) => { 
   const response = await axios.patch(
     `${API_URL}${id}/`,
     data,

@@ -12,6 +12,12 @@ class Task(models.Model):
         ("done", "Done"),
     ]
 
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
+
     title = models.CharField(max_length=255)
 
     description = models.TextField(
@@ -23,6 +29,12 @@ class Task(models.Model):
         max_length=20,
         choices=STATUS_CHOICES,
         default="todo"
+    )
+
+    priority = models.CharField(
+        max_length=20,
+        choices=PRIORITY_CHOICES,
+        default="medium"
     )
 
     project = models.ForeignKey(
