@@ -39,6 +39,9 @@ function ProjectsPage() {
 
   fetchProjects();
 }, []);
+
+
+
   const handleCreateProject = async () => {
     if (!name.trim()) {
       alert("Project name is required");
