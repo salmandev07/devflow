@@ -5,6 +5,7 @@ import RegisterPage from "../pages/auth/RegisterPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ProjectsPage from "../pages/dashboard/ProjectsPage";
+import TeamsPage from "../pages/dashboard/TeamsPage";
 
 function AppRoutes() {
   return (
@@ -25,7 +26,17 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        
+
+        <Route
+          path="/teams"
+          element={
+            <ProtectedRoute>
+              <TeamsPage />
+            </ProtectedRoute>
+          }
+        />
+
+
         <Route
           path="/projects"
           element={
