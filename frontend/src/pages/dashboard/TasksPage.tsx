@@ -10,34 +10,29 @@ type Task = {
   title: string;
   description: string;
   status: string;
+  priority: string;
 };
 
 function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("medium");
 
-  const loadTasks = async () => {
-    try {
-      const data = await getTasks();
-      setTasks(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  
 
-  useEffect(() => {
-  const fetchTasks = async () => {
-    try {
-      const data = await getTasks();
-      setTasks(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    useEffect(() => {
+    const fetchTasks = async () => {
+        try {
+        const data = await getTasks();
+        setTasks(data);
+        } catch (error) {
+        console.error(error);
+        }
+    };
 
-  fetchTasks();
-}, []);
+    void fetchTasks();
+    }, []);
 
   const handleCreateTask = async () => {
     if (!title.trim()) {
@@ -49,14 +44,17 @@ function TasksPage() {
       await createTask({
         title,
         description,
+        priority,
         project: 1,
         team: 1,
       });
 
       setTitle("");
       setDescription("");
+      setPriority("medium");
 
-      loadTasks();
+      const data = await getTasks();
+        setTasks(data);
     } catch (error) {
       console.error(error);
       alert("Failed to create task");
@@ -87,6 +85,22 @@ function TasksPage() {
           className="w-full p-3 rounded-xl bg-slate-800 text-white border border-slate-700 mb-3"
         />
 
+        <select
+          value={priority}
+          onChange={(e) =>
+            setPriority(e.target.value)
+          }
+          className="w-full p-3 rounded-xl bg-slate-800 text-white border border-slate-700 mb-4"
+        >
+          <option value="low">Low Priority</option>
+          <option value="medium">
+            Medium Priority
+          </option>
+          <option value="high">
+            High Priority
+          </option>
+        </select>
+
         <button
           onClick={handleCreateTask}
           className="
@@ -116,7 +130,6 @@ function TasksPage() {
               p-6
               shadow-xl
               hover:border-blue-500
-              hover:scale-105
               transition-all
             "
           >
@@ -128,20 +141,32 @@ function TasksPage() {
               {task.description}
             </p>
 
-            <span
-              className="
-                inline-block
-                mt-4
-                px-3
-                py-1
-                rounded-full
-                bg-blue-600
-                text-white
-                text-sm
-              "
-            >
-              {task.status}
-            </span>
+            <div className="flex gap-2 mt-4">
+              <span
+                className="
+                  px-3
+                  py-1
+                  rounded-full
+                  bg-blue-600
+                  text-white
+                  text-sm
+                "
+              >
+                {task.status}
+              </span>
+
+              <span
+                className={`px-3 py-1 rounded-full text-sm text-white ${
+                  task.priority === "high"
+                    ? "bg-red-600"
+                    : task.priority === "medium"
+                    ? "bg-yellow-600"
+                    : "bg-green-600"
+                }`}
+              >
+                {task.priority}
+              </span>
+            </div>
           </div>
         ))}
       </div>
