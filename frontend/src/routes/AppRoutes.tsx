@@ -6,6 +6,7 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ProjectsPage from "../pages/dashboard/ProjectsPage";
 import TeamsPage from "../pages/dashboard/TeamsPage";
+import TasksPage from "../pages/dashboard/TasksPage";
 
 function AppRoutes() {
   return (
@@ -23,6 +24,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute>
+              <TasksPage />
             </ProtectedRoute>
           }
         />
