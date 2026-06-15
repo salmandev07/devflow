@@ -3,6 +3,7 @@ import {
   FolderKanban,
   Users,
   CheckSquare,
+  Columns3,
 } from "lucide-react";
 
 function Sidebar() {
@@ -43,6 +44,14 @@ function Sidebar() {
         >
           <CheckSquare size={20} />
           Tasks
+        </a>
+
+        <a
+        href="/kanban"
+        className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 transition-all duration-300"
+        >
+        <Columns3 size={20} />
+        Kanban
         </a>
       </nav>
     </aside>

@@ -7,6 +7,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ProjectsPage from "../pages/dashboard/ProjectsPage";
 import TeamsPage from "../pages/dashboard/TeamsPage";
 import TasksPage from "../pages/dashboard/TasksPage";
+import KanbanPage from "../pages/dashboard/KanbanPage";
 
 function AppRoutes() {
   return (
@@ -17,6 +18,15 @@ function AppRoutes() {
         <Route
           path="/register"
           element={<RegisterPage />}
+        />
+        
+        <Route
+          path="/kanban"
+          element={
+            <ProtectedRoute>
+              <KanbanPage />
+            </ProtectedRoute>
+          }
         />
         
         <Route
