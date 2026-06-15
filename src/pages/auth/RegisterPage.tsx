@@ -23,7 +23,16 @@ function RegisterPage() {
           <Button>
             Create Account
           </Button>
-        </form>
+          <p className="text-center text-slate-400 mt-4">
+            Already have an account?
+            <a
+                href="/"
+                className="text-blue-500 ml-1"
+            >
+                Login
+            </a>
+          </p>
+                    </form>
       </AuthCard>
     </div>
   );

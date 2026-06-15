@@ -21,6 +21,15 @@ function LoginPage() {
           <Button>
             Sign In
           </Button>
+          <p className="text-center text-slate-400 mt-4">
+            Don't have an account?
+            <a
+                href="/register"
+                className="text-blue-500 ml-1"
+            >
+                Register
+            </a>
+          </p>
         </form>
       </AuthCard>
     </div>
