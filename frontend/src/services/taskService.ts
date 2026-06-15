@@ -33,3 +33,27 @@ export const createTask = async (
 
   return response.data;
 };
+
+export const updateTask = async (
+  id: number,
+  data: any
+) => {
+  const response = await axios.patch(
+    `${API_URL}${id}/`,
+    data,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
+
+export const deleteTask = async (
+  id: number
+) => {
+  const response = await axios.delete(
+    `${API_URL}${id}/`,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
