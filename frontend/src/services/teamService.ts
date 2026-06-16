@@ -28,3 +28,27 @@ export const createTeam = async (
 
   return response.data;
 };
+
+export const updateTeam = async (
+  id: number,
+  data: Record<string, unknown>
+) => {
+  const response = await axios.patch(
+    `${API_URL}${id}/`,
+    data,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
+
+export const deleteTeam = async (
+  id: number
+) => {
+  const response = await axios.delete(
+    `${API_URL}${id}/`,
+    getAuthHeader()
+  );
+
+  return response.data;
+};

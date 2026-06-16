@@ -6,4 +6,4 @@ class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = "__all__"
-        read_only_fields = ["owner", "members"]
+        read_only_fields = ["owner"]

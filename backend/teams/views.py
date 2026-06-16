@@ -21,4 +21,18 @@ class TeamListCreateView(
             owner=self.request.user
         )
 
-        team.members.add(self.request.user)
+        team.members.add(
+            self.request.user
+        )
+
+
+class TeamDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Team.objects.filter(
+            owner=self.request.user
+        )
