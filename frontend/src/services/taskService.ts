@@ -24,6 +24,7 @@ export const createTask = async (
     project: number;
     team: number;
     priority: string;
+    assigned_to: number | null;
   }
 ) => {
   const response = await axios.post(

@@ -8,6 +8,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+
+
+
 # Register Serializer
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -36,6 +41,7 @@ class LoginView(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
 
+
         user = authenticate(
             username=username,
             password=password
@@ -49,7 +55,22 @@ class LoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
+
         return Response({
             "access": str(refresh.access_token),
             "refresh": str(refresh)
         })
+    
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username"]
+
+
+class UserListView(
+    generics.ListAPIView
+):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
