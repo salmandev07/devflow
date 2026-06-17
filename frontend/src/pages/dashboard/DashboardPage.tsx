@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-
 import DashboardLayout from "../../layouts/DashboardLayout";
-
+import TaskStatusChart from "../../components/TaskStatusChart";
 import { getProjects } from "../../services/projectService";
 import { getTeams } from "../../services/teamService";
 import { getTasks } from "../../services/taskService";
+import TaskPriorityChart from "../../components/TaskPriorityChart";
 
 type Task = {
   id: number;
@@ -35,6 +35,18 @@ function DashboardPage() {
   const progressTasks = tasks.filter(
     (task) => task.status === "progress"
   ).length;
+
+  const lowPriorityTasks = tasks.filter(
+    (task) => task.priority === "low"
+  ).length;
+
+  const mediumPriorityTasks = tasks.filter(
+    (task) => task.priority === "medium"
+  ).length;
+
+  const highPriorityTasks = tasks.filter(
+    (task) => task.priority === "high"
+).length;
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -225,6 +237,20 @@ function DashboardPage() {
                   </span>
                 )}
               </div>
+              <div className="mt-8 grid gap-6 lg:grid-cols-2">
+                <TaskStatusChart
+                  todo={todoTasks}
+                  inProgress={progressTasks}
+                  done={completedTasks}
+                />
+
+                <TaskPriorityChart
+                  low={lowPriorityTasks}
+                  medium={mediumPriorityTasks}
+                  high={highPriorityTasks}
+                />
+              </div>
+              
             </div>
           ))}
         </div>
