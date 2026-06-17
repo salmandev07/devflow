@@ -3,6 +3,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import {getTeams,createTeam,} from "../../services/teamService";
 import { getUsers } from "../../services/userService";
 import { updateTeam } from "../../services/teamService";
+import { useNavigate } from "react-router-dom";
 
 type Team = {
   id: number;
@@ -20,6 +21,7 @@ function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamName, setTeamName] = useState("");
   const [users, setUsers] = useState<User[]>([]);
+  const navigate = useNavigate();
 
   const loadTeams = async () => {
     try {
@@ -276,7 +278,7 @@ const handleAddMember = async (
               </select>
 
             <div className="mt-5 flex gap-3">
-              <button
+              <button 
                 className="
                   px-4 py-2
                   bg-blue-600
@@ -284,6 +286,9 @@ const handleAddMember = async (
                   rounded-lg
                   text-white
                 "
+                 onClick={() =>
+    navigate(`/teams/${team.id}`)
+  }
               >
                 Open
               </button>

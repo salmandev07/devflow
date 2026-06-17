@@ -24,6 +24,7 @@ export const createTask = async (
     project: number;
     team: number;
     priority: string;
+    due_date: string | null;
     assigned_to: number | null;
   }
 ) => {

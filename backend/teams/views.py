@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Team
 from .serializers import TeamSerializer
-
+  
 
 class TeamListCreateView(
     generics.ListCreateAPIView
@@ -29,6 +29,7 @@ class TeamListCreateView(
 class TeamDetailView(
     generics.RetrieveUpdateDestroyAPIView
 ):
+    queryset = Team.objects.all()
     serializer_class = TeamSerializer
     permission_classes = [IsAuthenticated]
 

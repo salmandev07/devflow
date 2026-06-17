@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { getTasks, createTask } from "../../services/taskService";
+import {getTasks,createTask,updateTask,deleteTask,} from "../../services/taskService";
 import { getUsers } from "../../services/userService";
+import { getProjects } from "../../services/projectService";
+import { getTeams } from "../../services/teamService";
 
 type Task = {
   id: number;
@@ -9,8 +11,17 @@ type Task = {
   description: string;
   status: string;
   priority: string;
+
+  project: number;
+  project_name?: string;
+
+  team: number;
+  team_name?: string;
+
   assigned_to: number | null;
-  assigned_to_username?: string;
+  assigned_username?: string;
+
+  due_date: string | null;
 };
 
 type User = {
@@ -21,58 +32,151 @@ type User = {
 function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-
+  const [dueDate, setDueDate] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
-  const [assignedTo, setAssignedTo] =
-    useState<number | null>(null);
+  const [assignedTo, setAssignedTo] = useState<number | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  type Project = {
+  id: number;
+  name: string;
+};
+
+type Team = {
+  id: number;
+  name: string;
+};
+
+const [projects, setProjects] = useState<Project[]>([]);
+const [teams, setTeams] = useState<Team[]>([]);
+const [selectedProject, setSelectedProject] = useState("");
+const [selectedTeam, setSelectedTeam] = useState("");
+
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const taskData = await getTasks();
-        const userData = await getUsers();
+  const loadProjects = async () => {
+    try {
+      const data = await getProjects();
+      setProjects(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-        setTasks(taskData);
-        setUsers(userData);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      const taskData = await getTasks();
+      const userData = await getUsers();
 
-    void fetchData();
-  }, []);
+      setTasks(taskData);
+      setUsers(userData);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadTeams = async () => {
+  try {
+    const data = await getTeams();
+    setTeams(data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+  void loadProjects();
+  void loadTeams();
+  void fetchData();
+}, []);
 
   const handleCreateTask = async () => {
-    if (!title.trim()) {
-      alert("Task title is required");
-      return;
-    }
+  if (!title.trim()) {
+    alert("Task title is required");
+    return;
+  }
 
-    try {
+
+  if (!selectedProject) {
+    alert("Please select a project");
+    return;
+  }
+
+  if (!selectedTeam) {
+    alert("Please select a team");
+    return;
+  }
+  try {
+    if (editingTask) {
+      await updateTask(editingTask.id, {
+        title,
+        description,
+        priority,
+        due_date: dueDate || null,
+        assigned_to: assignedTo,
+      });
+    } else {
       await createTask({
         title,
         description,
         priority,
-        project: 1,
-        team: 1,
+        due_date: dueDate || null,
+        project: Number(selectedProject),
+        team: Number(selectedTeam),
         assigned_to: assignedTo,
       });
+    }
 
-      setTitle("");
-      setDescription("");
-      setPriority("medium");
-      setAssignedTo(null);
+    setTitle("");
+    setDescription("");
+    setPriority("medium");
+    setAssignedTo(null);
+    setDueDate("");
+    setEditingTask(null);
+    setSelectedProject("");
+    setSelectedTeam("");
+
+    const data = await getTasks();
+    setTasks(data);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save task");
+  }
+};
+
+
+
+  const handleDeleteTask = async (
+    id: number
+  ) => {
+    const confirmed = window.confirm(
+      "Delete this task?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteTask(id);
 
       const data = await getTasks();
       setTasks(data);
     } catch (error) {
       console.error(error);
-      alert("Failed to create task");
     }
   };
 
+  const handleEditTask = (task: Task) => {
+  setEditingTask(task);
+
+  setTitle(task.title);
+  setDescription(task.description);
+  setPriority(task.priority);
+  setAssignedTo(task.assigned_to);
+  setDueDate(task.due_date ?? "");
+};
+
+  
   return (
     <DashboardLayout>
       <h1 className="text-3xl font-bold text-white">
@@ -116,6 +220,67 @@ function TasksPage() {
         </select>
 
         <select
+  value={selectedProject}
+  onChange={(e) =>
+    setSelectedProject(e.target.value)
+  }
+  className="mb-4 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
+>
+  <option value="">
+    Select Project
+  </option>
+
+  {projects.map((project) => (
+    <option
+      key={project.id}
+      value={project.id}
+    >
+      {project.name}
+    </option>
+  ))}
+</select>
+
+<select
+  value={selectedTeam}
+  onChange={(e) =>
+    setSelectedTeam(e.target.value)
+  }
+  className="mb-4 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
+>
+  <option value="">
+    Select Team
+  </option>
+
+  {teams.map((team) => (
+    <option
+      key={team.id}
+      value={team.id}
+    >
+      {team.name}
+    </option>
+  ))}
+</select>
+
+      
+        <input
+        type="date"
+        value={dueDate}
+        onChange={(e) =>
+          setDueDate(e.target.value)
+        }
+        className="
+          w-full
+          p-3
+          rounded-xl
+          bg-slate-800
+          text-white
+          border
+          border-slate-700
+          mb-4
+        "
+      />
+
+        <select
           value={assignedTo ?? ""}
           onChange={(e) =>
             setAssignedTo(
@@ -140,13 +305,14 @@ function TasksPage() {
           ))}
         </select>
 
-        <button
-          onClick={handleCreateTask}
-          className="rounded-xl bg-blue-600 px-6 py-3 text-white transition-all hover:scale-105 hover:bg-blue-700"
-        >
-          Create Task
+        <button  onClick={handleCreateTask}  className="rounded-xl bg-blue-600 px-6 py-3 text-white transition-all hover:scale-105 hover:bg-blue-700"  >
+         {editingTask
+          ? "Update Task"
+          : "Create Task"}
         </button>
       </div>
+
+   
 
       <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {tasks.map((task) => (
@@ -162,16 +328,45 @@ function TasksPage() {
               {task.description}
             </p>
 
-            {task.assigned_to_username && (
+            <p className="mt-2 text-sm text-purple-400">
+              Project: {task.project_name}
+            </p>
+
+            <p className="mt-1 text-sm text-cyan-400">
+              Team: {task.team_name}
+            </p>
+
+            {task.assigned_username && (
               <p className="mt-2 text-sm text-blue-400">
                 Assigned to:{" "}
-                {task.assigned_to_username}
+                {task.assigned_username}
+              </p>
+            )}
+
+            {task.due_date && (
+              <p className="mt-2 text-sm text-orange-400">
+                📅 Due: {task.due_date}
               </p>
             )}
 
             <div className="mt-4 flex gap-2">
               <span className="rounded-full bg-blue-600 px-3 py-1 text-sm text-white">
-                {task.status}
+                {task.due_date &&
+                  new Date(task.due_date) < new Date() &&
+                  task.status !== "done" && (
+                    <span
+                      className="
+                        rounded-full
+                        bg-red-700
+                        px-2
+                        py-1
+                        text-xs
+                        text-white
+                      "
+                    >
+                      OVERDUE
+                    </span>
+                )}
               </span>
 
               <span
@@ -186,6 +381,36 @@ function TasksPage() {
               >
                 {task.priority}
               </span>
+
+              <div className="mt-4 flex gap-2">
+  <button
+    onClick={() => handleEditTask(task)}
+    className="
+      rounded-lg
+      bg-yellow-600
+      px-3
+      py-1
+      text-white
+      hover:bg-yellow-700
+    "
+  >
+    Edit
+  </button>
+
+  <button
+    onClick={() => handleDeleteTask(task.id)}
+    className="
+      rounded-lg
+      bg-red-600
+      px-3
+      py-1
+      text-white
+      hover:bg-red-700
+    "
+  >
+    Delete
+  </button>
+</div>
             </div>
           </div>
         ))}
