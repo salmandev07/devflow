@@ -17,6 +17,15 @@ export const getSubtasks = async (taskId: number) => {
   return response.data;
 };
 
+export const getAllSubtasks = async () => {
+  const response = await axios.get(
+    API_URL,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
+
 export const createSubtask = async (
   taskId: number,
   title: string

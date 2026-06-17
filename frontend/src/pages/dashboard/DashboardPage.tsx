@@ -4,8 +4,10 @@ import TaskStatusChart from "../../components/TaskStatusChart";
 import { getProjects } from "../../services/projectService";
 import { getTeams } from "../../services/teamService";
 import { getTasks } from "../../services/taskService";
+import { getAllSubtasks, } from "../../services/subtaskService";
 import TaskPriorityChart from "../../components/TaskPriorityChart";
 import ActivityFeed from "../../components/ActivityFeed";
+
 
 type Task = {
   id: number;
@@ -16,14 +18,32 @@ type Task = {
   due_date?: string | null;
 };
 
+type Subtask = {
+  id: number;
+  completed: boolean;
+};
+
 function DashboardPage() {
   const [projectCount, setProjectCount] = useState(0);
   const [teamCount, setTeamCount] = useState(0);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
 
   const totalProjects = projectCount;
   const totalTeams = teamCount;
   const totalTasks = tasks.length;
+  const totalSubtasks = subtasks.length;
+
+  const completedSubtasks = subtasks.filter(
+    (subtask) => subtask.completed
+  ).length;
+
+  const subtaskCompletionPercentage =
+    totalSubtasks === 0
+      ? 0
+      : Math.round(
+          (completedSubtasks / totalSubtasks) * 100
+        );
 
   const completedTasks = tasks.filter(
     (task) => task.status === "done"
@@ -56,9 +76,13 @@ function DashboardPage() {
         const teams = await getTeams();
         const taskData = await getTasks();
 
+        const allSubtasks = await getAllSubtasks();
+
+
         setProjectCount(projects.length);
         setTeamCount(teams.length);
         setTasks(taskData);
+        setSubtasks(allSubtasks);
       } catch (error) {
         console.error(error);
       }
@@ -98,13 +122,26 @@ function DashboardPage() {
       {/* Stats Cards */}
 
       <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[
-          ["Projects", totalProjects],
-          ["Teams", totalTeams],
-          ["Tasks", totalTasks],
-          ["Completed", completedTasks],
-          ["Todo", todoTasks],
-          ["In Progress", progressTasks],
+        {[ 
+            ["Projects", totalProjects],
+            ["Teams", totalTeams],
+            ["Tasks", totalTasks],
+
+            ["Subtasks", totalSubtasks],
+
+            ["Completed", completedTasks],
+
+            ["Completed Subtasks", completedSubtasks],
+
+            [
+              "Subtask %",
+              `${subtaskCompletionPercentage}%`,
+            ],
+
+            ["Todo", todoTasks],
+
+            ["In Progress", progressTasks],
+
         ].map(([title, count]) => (
           <div
             key={String(title)}
