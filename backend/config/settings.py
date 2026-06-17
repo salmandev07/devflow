@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "activities",
     "comments", 
     "attachments",
+    "notifications",
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

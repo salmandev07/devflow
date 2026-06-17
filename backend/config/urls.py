@@ -49,6 +49,11 @@ urlpatterns = [
         "api/attachments/",
         include("attachments.urls")
     ),
+
+    path(
+        "api/notifications/",
+        include("notifications.urls")
+    ),
 ]
 
 urlpatterns += static(
