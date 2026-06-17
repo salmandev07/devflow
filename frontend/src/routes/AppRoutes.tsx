@@ -11,6 +11,7 @@ import KanbanPage from "../pages/dashboard/KanbanPage";
 import TeamWorkspacePage from "../pages/dashboard/TeamWorkspacePage";
 import ProjectDetailsPage from "../pages/dashboard/ProjectDetailsPage";
 import TaskDetailsPage from "../pages/dashboard/TaskDetailsPage";
+import NotificationsPage from "../pages/dashboard/NotificationsPage";
 
 function AppRoutes() {
   return (
@@ -87,6 +88,15 @@ function AppRoutes() {
       <Route
         path="/tasks/:id"
         element={<TaskDetailsPage />}
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
+          </ProtectedRoute>
+        }
       />
 
       </Routes>

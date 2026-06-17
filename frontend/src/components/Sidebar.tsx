@@ -4,6 +4,7 @@ import {
   Users,
   CheckSquare,
   Columns3,
+  Bell,
 } from "lucide-react";
 
 function Sidebar() {
@@ -52,6 +53,14 @@ function Sidebar() {
         >
         <Columns3 size={20} />
         Kanban
+        </a>
+
+       <a
+          href="/notifications"
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 transition-all duration-300"
+        >
+          <Bell size={20} />
+          Notifications
         </a>
       </nav>
     </aside>
