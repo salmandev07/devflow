@@ -29,16 +29,6 @@ type User = {
   username: string;
 };
 
-function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [dueDate, setDueDate] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("medium");
-  const [assignedTo, setAssignedTo] = useState<number | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-
   type Project = {
   id: number;
   name: string;
@@ -49,11 +39,24 @@ type Team = {
   name: string;
 };
 
-const [projects, setProjects] = useState<Project[]>([]);
-const [teams, setTeams] = useState<Team[]>([]);
-const [selectedProject, setSelectedProject] = useState("");
-const [selectedTeam, setSelectedTeam] = useState("");
-
+function TasksPage() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [dueDate, setDueDate] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("medium");
+  const [assignedTo, setAssignedTo] = useState<number | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterProject, setFilterProject] = useState("");
+  const [filterTeam, setFilterTeam] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
 
   useEffect(() => {
   const loadProjects = async () => {
@@ -92,58 +95,58 @@ const [selectedTeam, setSelectedTeam] = useState("");
 }, []);
 
   const handleCreateTask = async () => {
-  if (!title.trim()) {
-    alert("Task title is required");
-    return;
-  }
-
-
-  if (!selectedProject) {
-    alert("Please select a project");
-    return;
-  }
-
-  if (!selectedTeam) {
-    alert("Please select a team");
-    return;
-  }
-  try {
-    if (editingTask) {
-      await updateTask(editingTask.id, {
-        title,
-        description,
-        priority,
-        due_date: dueDate || null,
-        assigned_to: assignedTo,
-      });
-    } else {
-      await createTask({
-        title,
-        description,
-        priority,
-        due_date: dueDate || null,
-        project: Number(selectedProject),
-        team: Number(selectedTeam),
-        assigned_to: assignedTo,
-      });
+    if (!title.trim()) {
+      alert("Task title is required");
+      return;
     }
 
-    setTitle("");
-    setDescription("");
-    setPriority("medium");
-    setAssignedTo(null);
-    setDueDate("");
-    setEditingTask(null);
-    setSelectedProject("");
-    setSelectedTeam("");
 
-    const data = await getTasks();
-    setTasks(data);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to save task");
-  }
-};
+    if (!selectedProject) {
+      alert("Please select a project");
+      return;
+    }
+
+    if (!selectedTeam) {
+      alert("Please select a team");
+      return;
+    }
+    try {
+      if (editingTask) {
+        await updateTask(editingTask.id, {
+          title,
+          description,
+          priority,
+          due_date: dueDate || null,
+          assigned_to: assignedTo,
+        });
+      } else {
+        await createTask({
+          title,
+          description,
+          priority,
+          due_date: dueDate || null,
+          project: Number(selectedProject),
+          team: Number(selectedTeam),
+          assigned_to: assignedTo,
+        });
+      }
+
+      setTitle("");
+      setDescription("");
+      setPriority("medium");
+      setAssignedTo(null);
+      setDueDate("");
+      setEditingTask(null);
+      setSelectedProject("");
+      setSelectedTeam("");
+
+      const data = await getTasks();
+      setTasks(data);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save task");
+    }
+  };
 
 
 
@@ -311,11 +314,188 @@ const [selectedTeam, setSelectedTeam] = useState("");
           : "Create Task"}
         </button>
       </div>
+      <br></br>
+     
+     
 
-   
+   <input type="text" placeholder="Search tasks..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="  mb-6  w-full  rounded-xl  border  border-slate-700  bg-slate-800 -3  text-white"/>
+
+   #PROJECT FILTER  
+
+
+    <select
+      value={filterProject}
+      onChange={(e) =>
+        setFilterProject(e.target.value)
+      }
+      className="
+        mb-6
+        w-full
+        rounded-xl
+        border
+        border-slate-700
+        bg-slate-800
+        p-3
+        text-white
+      "
+    >
+      <option value="">
+        All Projects
+      </option>
+
+      {projects.map((project) => (
+        <option
+          key={project.id}
+          value={project.id}
+        >
+          {project.name}
+        </option>
+      ))}
+    </select>
+
+#TEAM FILTER
+
+    <select
+      value={filterTeam}
+      onChange={(e) =>
+        setFilterTeam(e.target.value)
+      }
+      className="
+        mb-6
+        w-full
+        rounded-xl
+        border
+        border-slate-700
+        bg-slate-800
+        p-3
+        text-white
+      "
+    >
+      <option value="">
+        All Teams
+      </option>
+
+      {teams.map((team) => (
+        <option
+          key={team.id}
+          value={team.id}
+        >
+          {team.name}
+        </option>
+      ))}
+    </select>
+
+    # STATUS FILTER
+
+    <select
+  value={filterStatus}
+  onChange={(e) =>
+    setFilterStatus(e.target.value)
+  }
+  className="
+    mb-6
+    w-full
+    rounded-xl
+    border
+    border-slate-700
+    bg-slate-800
+    p-3
+    text-white
+  "
+>
+  <option value="">
+    All Statuses
+  </option>
+
+  <option value="todo">
+    Todo
+  </option>
+
+  <option value="in_progress">
+    In Progress
+  </option>
+
+  <option value="done">
+    Done
+  </option>
+</select>
+
+# PRIORITY FILTER 
+
+<select
+  value={filterPriority}
+  onChange={(e) =>
+    setFilterPriority(e.target.value)
+  }
+  className="
+    mb-6
+    w-full
+    rounded-xl
+    border
+    border-slate-700
+    bg-slate-800
+    p-3
+    text-white
+  "
+>
+  <option value="">
+    All Priorities
+  </option>
+
+  <option value="low">
+    Low
+  </option>
+
+  <option value="medium">
+    Medium
+  </option>
+
+  <option value="high">
+    High
+  </option>
+</select>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {tasks.map((task) => (
+      
+      {tasks
+        .filter((task) => {
+          const search =
+            searchTerm.toLowerCase();
+
+          const matchesSearch =
+            task.title
+              .toLowerCase()
+              .includes(search) ||
+            task.description
+              .toLowerCase()
+              .includes(search);
+
+          const matchesProject =
+            !filterProject ||
+            task.project ===
+              Number(filterProject);
+          
+          const matchesTeam =
+            !filterTeam ||
+            task.team === Number(filterTeam);
+
+          const matchesStatus =
+            !filterStatus ||
+            task.status === filterStatus;
+
+          const matchesPriority =
+            !filterPriority ||
+            task.priority === filterPriority;
+
+    return (
+      matchesSearch &&
+      matchesProject &&
+      matchesTeam &&
+      matchesStatus &&
+      matchesPriority
+    );
+  })
+  .map((task) => (
           <div
             key={task.id}
             className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl transition-all hover:border-blue-500"
