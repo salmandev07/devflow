@@ -42,6 +42,7 @@ export const createProject = async (
   return response.data;
 };
 
+
 export const getProject = async (
   id: number
 ) => {

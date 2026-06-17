@@ -7,3 +7,8 @@ class TeamSerializer(serializers.ModelSerializer):
         model = Team
         fields = "__all__"
         read_only_fields = ["owner"]
+        extra_kwargs = {
+            "members": {
+                "required": False
+            }
+        }
