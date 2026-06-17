@@ -52,3 +52,14 @@ export const deleteTeam = async (
 
   return response.data;
 };
+
+export const getTeam = async (
+  id: number
+) => {
+  const response = await axios.get(
+    `${API_URL}${id}/`,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
