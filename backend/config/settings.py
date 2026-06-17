@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'teams', 
     "activities",
     "comments", 
+    "attachments",
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -146,3 +147,6 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
 import DashboardLayout from "../../layouts/DashboardLayout";
-
 import { getTask } from "../../services/taskService";
-
 import TaskComments from "../../components/TaskComments";
+import TaskAttachments from "../../components/TaskAttachments";
+
 
 type Task = {
   id: number;
@@ -106,6 +105,10 @@ function TaskDetailsPage() {
         </div>
 
         <TaskComments
+          taskId={task.id}
+        />
+
+        <TaskAttachments
           taskId={task.id}
         />
       </div>

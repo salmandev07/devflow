@@ -39,8 +39,18 @@ function TaskComments({
   };
 
   useEffect(() => {
-    void loadComments();
-  }, [taskId]);
+  const fetchComments = async () => {
+    try {
+      const data = await getComments(taskId);
+
+      setComments(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  void fetchComments();
+}, [taskId]);
 
   const handleAddComment =
     async () => {
