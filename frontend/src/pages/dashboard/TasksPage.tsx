@@ -1,9 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import {getTasks,createTask,updateTask,deleteTask,} from "../../services/taskService";
 import { getUsers } from "../../services/userService";
 import { getProjects } from "../../services/projectService";
 import { getTeams } from "../../services/teamService";
+
 
 type Task = {
   id: number;
@@ -57,6 +59,7 @@ function TasksPage() {
   const [filterTeam, setFilterTeam] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
   const loadProjects = async () => {
@@ -563,34 +566,54 @@ function TasksPage() {
               </span>
 
               <div className="mt-4 flex gap-2">
-  <button
-    onClick={() => handleEditTask(task)}
-    className="
-      rounded-lg
-      bg-yellow-600
-      px-3
-      py-1
-      text-white
-      hover:bg-yellow-700
-    "
-  >
-    Edit
-  </button>
+                <button
+                  onClick={() =>
+                    navigate(`/tasks/${task.id}`)
+                  }
+                  className="
+                    rounded-lg
+                    bg-blue-600
+                    px-3
+                    py-1
+                    text-white
+                    hover:bg-blue-700
+                  "
+                >
+                  Open
+                </button>
 
-  <button
-    onClick={() => handleDeleteTask(task.id)}
-    className="
-      rounded-lg
-      bg-red-600
-      px-3
-      py-1
-      text-white
-      hover:bg-red-700
-    "
-  >
-    Delete
-  </button>
-</div>
+                <button
+                  onClick={() => handleEditTask(task)}
+                  className="
+                    rounded-lg
+                    bg-yellow-600
+                    px-3
+                    py-1
+                    text-white
+                    hover:bg-yellow-700
+                  "
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() =>
+                    handleDeleteTask(task.id)
+                  }
+                  className="
+                    rounded-lg
+                    bg-red-600
+                    px-3
+                    py-1
+                    text-white
+                    hover:bg-red-700
+                  "
+                >
+                  Delete
+                </button>
+              </div>
+
+
             </div>
           </div>
         ))}

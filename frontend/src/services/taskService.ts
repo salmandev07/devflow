@@ -60,3 +60,14 @@ export const deleteTask = async (
 
   return response.data;
 };
+
+export const getTask = async (
+  id: number
+) => {
+  const response = await axios.get(
+    `${API_URL}${id}/`,
+    getAuthHeader()
+  );
+
+  return response.data;
+};

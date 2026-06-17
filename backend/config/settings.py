@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'projects',
     'tasks',
     'teams', 
-    "activities", 
+    "activities",
+    "comments", 
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
