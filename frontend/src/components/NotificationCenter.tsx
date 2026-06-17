@@ -28,9 +28,18 @@ function NotificationCenter() {
       }
     };
 
-  useEffect(() => {
-    void loadNotifications();
-  }, []);
+useEffect(() => {
+  const loadNotifications = async () => {
+    try {
+      const data = await getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  void loadNotifications();
+}, []);
 
   const handleRead =
     async (id: number) => {

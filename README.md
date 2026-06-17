@@ -47,27 +47,32 @@ You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-re
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import reactX from "eslint-plugin-react-x";
+import reactDom from "eslint-plugin-react-dom";
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
+
     extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
+      reactX.configs["recommended-typescript"],
       reactDom.configs.recommended,
     ],
+
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: [
+          "./tsconfig.node.json",
+          "./tsconfig.app.json",
+        ],
         tsconfigRootDir: import.meta.dirname,
       },
-      // other options...
+    },
+
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
     },
   },
-])
+]);
 ```

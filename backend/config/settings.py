@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "comments", 
     "attachments",
     "notifications",
+    "subtasks",
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

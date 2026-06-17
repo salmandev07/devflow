@@ -4,6 +4,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import { getTask } from "../../services/taskService";
 import TaskComments from "../../components/TaskComments";
 import TaskAttachments from "../../components/TaskAttachments";
+import TaskSubtasks from "../../components/TaskSubtasks";
 
 
 type Task = {
@@ -104,13 +105,18 @@ function TaskDetailsPage() {
           </p>
         </div>
 
-        <TaskComments
-          taskId={task.id}
-        />
+        <div className="mt-8">
+        <TaskComments taskId={task.id} />
+        </div>
 
-        <TaskAttachments
-          taskId={task.id}
-        />
+        <div className="mt-8">
+        <TaskAttachments taskId={task.id} />
+        </div>
+
+        <div className="mt-8">
+        <TaskSubtasks taskId={task.id} />
+        </div>
+
       </div>
     </DashboardLayout>
   );

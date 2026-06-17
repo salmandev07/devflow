@@ -54,7 +54,13 @@ urlpatterns = [
         "api/notifications/",
         include("notifications.urls")
     ),
+
+    path(
+        "api/subtasks/",
+        include("subtasks.urls")
+    ),
 ]
+
 
 urlpatterns += static(
     settings.MEDIA_URL,
