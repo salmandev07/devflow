@@ -5,6 +5,7 @@ import { getProjects } from "../../services/projectService";
 import { getTeams } from "../../services/teamService";
 import { getTasks } from "../../services/taskService";
 import TaskPriorityChart from "../../components/TaskPriorityChart";
+import ActivityFeed from "../../components/ActivityFeed";
 
 type Task = {
   id: number;
@@ -153,6 +154,7 @@ function DashboardPage() {
       </div>
 
 {overdueTasks.length > 0 && (
+  
   <div className="mt-10">
     <h2 className="mb-4 text-2xl font-bold text-red-400">
       ⚠ Overdue Tasks
@@ -179,9 +181,29 @@ function DashboardPage() {
           </p>
         </div>
       ))}
+      
     </div>
   </div>
 )}
+
+    <div className="mt-10 grid gap-6 lg:grid-cols-2">
+      <TaskStatusChart
+        todo={todoTasks}
+        inProgress={progressTasks}
+        done={completedTasks}
+      />
+
+      <TaskPriorityChart
+        low={lowPriorityTasks}
+        medium={mediumPriorityTasks}
+        high={highPriorityTasks}
+      />
+    </div>
+
+    <div className="mt-10">
+      <ActivityFeed />
+    </div>
+
 
       {/* Recent Tasks */}
 
@@ -237,19 +259,7 @@ function DashboardPage() {
                   </span>
                 )}
               </div>
-              <div className="mt-8 grid gap-6 lg:grid-cols-2">
-                <TaskStatusChart
-                  todo={todoTasks}
-                  inProgress={progressTasks}
-                  done={completedTasks}
-                />
-
-                <TaskPriorityChart
-                  low={lowPriorityTasks}
-                  medium={mediumPriorityTasks}
-                  high={highPriorityTasks}
-                />
-              </div>
+              
               
             </div>
           ))}
