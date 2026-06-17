@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import {
-  getProjects,
-  createProject,
-} from "../../services/projectService";
+import { getProjects, createProject, } from "../../services/projectService";
+import { useNavigate } from "react-router-dom";
 
 type Project = {
   id: number;
@@ -15,6 +13,7 @@ function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const navigate = useNavigate();
 
   const loadProjects = async () => {
     try {
@@ -133,12 +132,16 @@ function ProjectsPage() {
 
             <div className="mt-5 flex gap-3">
               <button
+                onClick={() =>
+                  navigate(`/projects/${project.id}`)
+                }
                 className="
-                  px-4 py-2
-                  bg-blue-600
-                  hover:bg-blue-700
                   rounded-lg
+                  bg-blue-600
+                  px-3
+                  py-1
                   text-white
+                  hover:bg-blue-700
                 "
               >
                 Open

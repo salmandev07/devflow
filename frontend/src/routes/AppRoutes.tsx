@@ -9,6 +9,7 @@ import TeamsPage from "../pages/dashboard/TeamsPage";
 import TasksPage from "../pages/dashboard/TasksPage";
 import KanbanPage from "../pages/dashboard/KanbanPage";
 import TeamWorkspacePage from "../pages/dashboard/TeamWorkspacePage";
+import ProjectDetailsPage from "../pages/dashboard/ProjectDetailsPage";
 
 function AppRoutes() {
   return (
@@ -72,6 +73,15 @@ function AppRoutes() {
         path="/teams/:id"
         element={<TeamWorkspacePage />}
       />
+      
+      <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute>
+              <ProjectDetailsPage />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
 

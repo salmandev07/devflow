@@ -39,3 +39,22 @@ class ProjectListCreateView(generics.ListCreateAPIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+class ProjectDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    serializer_class = ProjectSerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    authentication_classes = [
+        JWTAuthentication
+    ]
+
+    def get_queryset(self):
+        return Project.objects.filter(
+            owner=self.request.user
+        )
+       

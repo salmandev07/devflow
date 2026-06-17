@@ -41,3 +41,14 @@ export const createProject = async (
 
   return response.data;
 };
+
+export const getProject = async (
+  id: number
+) => {
+  const response = await axios.get(
+    `${API_URL}${id}/`,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
