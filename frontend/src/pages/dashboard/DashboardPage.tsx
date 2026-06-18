@@ -14,6 +14,8 @@ type Task = {
   title: string;
   status: string;
   priority: string;
+  estimated_hours: number;
+  actual_hours: number;
   assigned_to_username?: string;
   due_date?: string | null;
 };
@@ -28,11 +30,33 @@ function DashboardPage() {
   const [teamCount, setTeamCount] = useState(0);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-
   const totalProjects = projectCount;
   const totalTeams = teamCount;
   const totalTasks = tasks.length;
   const totalSubtasks = subtasks.length;
+
+  const totalEstimatedHours =
+  tasks.reduce(
+    (sum, task) =>
+      sum + task.estimated_hours,
+    0
+  );
+
+const totalActualHours =
+  tasks.reduce(
+    (sum, task) =>
+      sum + task.actual_hours,
+    0
+  );
+
+const productivity =
+  totalEstimatedHours > 0
+    ? Math.round(
+        (totalActualHours /
+          totalEstimatedHours) *
+          100
+      )
+    : 0;
 
   const completedSubtasks = subtasks.filter(
     (subtask) => subtask.completed
@@ -126,6 +150,11 @@ function DashboardPage() {
             ["Projects", totalProjects],
             ["Teams", totalTeams],
             ["Tasks", totalTasks],
+            ["Estimated Hours", totalEstimatedHours],
+
+            ["Actual Hours", totalActualHours],
+
+            ["Productivity %", `${productivity}%`],
 
             ["Subtasks", totalSubtasks],
 

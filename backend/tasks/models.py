@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 from projects.models import Project
 from teams.models import Team
+from django.utils import timezone
 
 
 class Task(models.Model):
@@ -63,6 +64,18 @@ class Task(models.Model):
         blank=True
     )
 
+    estimated_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
+    actual_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )
@@ -70,3 +83,33 @@ class Task(models.Model):
     
     def __str__(self):
         return self.title
+    
+class TimeSession(models.Model):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="time_sessions"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    started_at = models.DateTimeField(
+        default=timezone.now
+    )
+
+    ended_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    duration_hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0
+    )
+
+    def __str__(self):
+        return f"{self.task.title}"

@@ -1,9 +1,7 @@
 from django.urls import path
 
-from .views import (
-    ProjectListCreateView,
-    ProjectDetailView,
-)
+from .views import ( ProjectListCreateView, ProjectDetailView )
+from .report_views import ( ProjectReportView )
 
 urlpatterns = [
     path(
@@ -16,4 +14,11 @@ urlpatterns = [
         ProjectDetailView.as_view(),
         name="project-detail",
     ),
+
+    path(
+        "<int:project_id>/report/",
+        ProjectReportView.as_view(),
+        name="project-report",
+    ),
+    
 ]

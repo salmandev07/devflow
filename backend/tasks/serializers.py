@@ -33,5 +33,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "assigned_to",
             "assigned_username",
             "due_date",
+            "estimated_hours",
+            "actual_hours",
             "created_at",
         ]

@@ -26,6 +26,8 @@ export const createTask = async (
     priority: string;
     due_date: string | null;
     assigned_to: number | null;
+    estimated_hours: number;
+    actual_hours: number;
   }
 ) => {
   const response = await axios.post(
@@ -71,3 +73,51 @@ export const getTask = async (
 
   return response.data;
 };
+
+export const startTimer = async (
+  taskId: number
+) => {
+  const response = await axios.post(
+    `${API_URL}${taskId}/start-timer/`,
+    {},
+    getAuthHeader()
+  );
+
+  return response.data;
+};
+
+export const stopTimer = async (
+  taskId: number
+) => {
+  const response = await axios.post(
+    `${API_URL}${taskId}/stop-timer/`,
+    {},
+    getAuthHeader()
+  );
+
+  return response.data;
+};
+
+export const getTimerStatus = async (
+  taskId: number
+) => {
+  const response = await axios.get(
+    `${API_URL}${taskId}/timer-status/`,
+    getAuthHeader()
+  );
+
+  return response.data;
+};
+
+export const getTaskSessions =
+  async (
+    taskId: number
+  ) => {
+    const response =
+      await axios.get(
+        `${API_URL}${taskId}/sessions/`,
+        getAuthHeader()
+      );
+
+    return response.data;
+  };

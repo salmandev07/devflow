@@ -12,6 +12,7 @@ function DashboardLayout({ children }: Props) {
 
       <div className="flex-1">
         <Navbar />
+        
 
         <main className="p-6">
           {children}

@@ -5,6 +5,7 @@ import {getTasks,createTask,updateTask,deleteTask,} from "../../services/taskSer
 import { getUsers } from "../../services/userService";
 import { getProjects } from "../../services/projectService";
 import { getTeams } from "../../services/teamService";
+import { getTeamMembers, } from "../../services/teamMembershipService";
 
 
 type Task = {
@@ -22,6 +23,9 @@ type Task = {
 
   assigned_to: number | null;
   assigned_username?: string;
+
+  estimated_hours: number;
+  actual_hours: number;
 
   due_date: string | null;
 };
@@ -41,10 +45,19 @@ type Team = {
   name: string;
 };
 
+type TeamMembership = {
+  id: number;
+  user: number;
+  username: string;
+  role: string;
+};
+
 function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [dueDate, setDueDate] = useState("");
+  const [estimatedHours, setEstimatedHours] = useState("");
+  const [actualHours, setActualHours] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
@@ -60,6 +73,7 @@ function TasksPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
   const navigate = useNavigate();
+  const [teamMembers, setTeamMembers] = useState<TeamMembership[]>([]);
 
   useEffect(() => {
   const loadProjects = async () => {
@@ -97,6 +111,29 @@ function TasksPage() {
   void fetchData();
 }, []);
 
+
+useEffect(() => {
+  const loadMembers = async () => {
+    if (!selectedTeam) {
+      setTeamMembers([]);
+      return;
+    }
+
+    try {
+      const data =
+        await getTeamMembers(
+          Number(selectedTeam)
+        );
+
+      setTeamMembers(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  void loadMembers();
+}, [selectedTeam]);
+
   const handleCreateTask = async () => {
     if (!title.trim()) {
       alert("Task title is required");
@@ -121,16 +158,29 @@ function TasksPage() {
           priority,
           due_date: dueDate || null,
           assigned_to: assignedTo,
-        });
+          estimated_hours:
+            Number(estimatedHours) || 0,
+
+          actual_hours:
+            Number(actualHours) || 0,
+                  });
       } else {
         await createTask({
           title,
           description,
           priority,
           due_date: dueDate || null,
+
           project: Number(selectedProject),
           team: Number(selectedTeam),
+
           assigned_to: assignedTo,
+
+          estimated_hours:
+            Number(estimatedHours) || 0,
+
+          actual_hours:
+            Number(actualHours) || 0,
         });
       }
 
@@ -142,6 +192,8 @@ function TasksPage() {
       setEditingTask(null);
       setSelectedProject("");
       setSelectedTeam("");
+      setEstimatedHours("");
+      setActualHours("");
 
       const data = await getTasks();
       setTasks(data);
@@ -177,11 +229,28 @@ function TasksPage() {
 
   setTitle(task.title);
   setDescription(task.description);
-  setPriority(task.priority);
-  setAssignedTo(task.assigned_to);
-  setDueDate(task.due_date ?? "");
-};
 
+  setPriority(task.priority);
+
+  setAssignedTo(task.assigned_to);
+
+  setDueDate(task.due_date ?? "");
+
+  setSelectedProject(
+    String(task.project)
+  );
+
+  setSelectedTeam(
+    String(task.team)
+  );
+  setEstimatedHours(
+  String(task.estimated_hours)
+);
+
+setActualHours(
+  String(task.actual_hours)
+);
+};
   
   return (
     <DashboardLayout>
@@ -226,12 +295,13 @@ function TasksPage() {
         </select>
 
         <select
-  value={selectedProject}
-  onChange={(e) =>
-    setSelectedProject(e.target.value)
-  }
-  className="mb-4 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
->
+        disabled={!!editingTask}
+        value={selectedProject} 
+        onChange={(e) =>
+             setSelectedProject(e.target.value)
+          }
+          className="mb-4 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
+         >
   <option value="">
     Select Project
   </option>
@@ -247,6 +317,7 @@ function TasksPage() {
 </select>
 
 <select
+  disabled={!!editingTask}
   value={selectedTeam}
   onChange={(e) =>
     setSelectedTeam(e.target.value)
@@ -286,6 +357,53 @@ function TasksPage() {
         "
       />
 
+
+      <input
+  type="number"
+  step="0.5"
+  min="0"
+  value={estimatedHours}
+  onChange={(e) =>
+    setEstimatedHours(
+      e.target.value
+    )
+  }
+  placeholder="Estimated Hours"
+  className="
+    w-full
+    p-3
+    rounded-xl
+    bg-slate-800
+    text-white
+    border
+    border-slate-700
+    mb-4
+  "
+/>
+
+<input
+  type="number"
+  step="0.5"
+  min="0"
+  value={actualHours}
+  onChange={(e) =>
+    setActualHours(
+      e.target.value
+    )
+  }
+  placeholder="Actual Hours"
+  className="
+    w-full
+    p-3
+    rounded-xl
+    bg-slate-800
+    text-white
+    border
+    border-slate-700
+    mb-4
+  "
+/>
+
         <select
           value={assignedTo ?? ""}
           onChange={(e) =>
@@ -301,14 +419,16 @@ function TasksPage() {
             Unassigned
           </option>
 
-          {users.map((user) => (
-            <option
-              key={user.id}
-              value={user.id}
-            >
-              {user.username}
-            </option>
-          ))}
+          {teamMembers.map(
+              (member) => (
+                <option
+                  key={member.id}
+                  value={member.user}
+                >
+                  {member.username}
+                </option>
+              )
+            )}
         </select>
 
         <button  onClick={handleCreateTask}  className="rounded-xl bg-blue-600 px-6 py-3 text-white transition-all hover:scale-105 hover:bg-blue-700"  >
@@ -498,11 +618,22 @@ function TasksPage() {
       matchesPriority
     );
   })
-  .map((task) => (
-          <div
-            key={task.id}
-            className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl transition-all hover:border-blue-500"
-          >
+  
+  .map((task) => {
+    const efficiency =
+      task.estimated_hours > 0
+        ? Math.round(
+            (task.actual_hours /
+              task.estimated_hours) *
+              100
+          )
+        : 0;
+
+    return (
+      <div
+        key={task.id}
+        className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl transition-all hover:border-blue-500"
+      >
             <h2 className="text-xl font-bold text-white">
               {task.title}
             </h2>
@@ -532,6 +663,17 @@ function TasksPage() {
               </p>
             )}
 
+            <p className="mt-2 text-sm text-green-400">
+              ⏱ Estimated: {task.estimated_hours}h
+            </p>
+
+            <p className="mt-1 text-sm text-cyan-400">
+              ⌛ Actual: {task.actual_hours}h
+            </p>
+
+            <p className="mt-1 text-sm text-yellow-400">
+              📊 Used: {efficiency}%
+            </p>
             <div className="mt-4 flex gap-2">
               <span className="rounded-full bg-blue-600 px-3 py-1 text-sm text-white">
                 {task.due_date &&
@@ -616,7 +758,8 @@ function TasksPage() {
 
             </div>
           </div>
-        ))}
+  );
+})}
       </div>
     </DashboardLayout>
   );

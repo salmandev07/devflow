@@ -4,6 +4,8 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import { getTeam } from "../../services/teamService";
 import { getUsers } from "../../services/userService";
 import { getTasks } from "../../services/taskService";
+import { getTeamMembers, addTeamMember, updateTeamMember, deleteTeamMember, } from "../../services/teamMembershipService";
+
 
 type Team = {
   id: number;
@@ -28,6 +30,12 @@ type Task = {
   team_name?: string;
 };
 
+type TeamMembership = {
+  id: number;
+  user: number;
+  username: string;
+  role: string;
+};
 
 function TeamWorkspacePage() {
 
@@ -36,6 +44,9 @@ function TeamWorkspacePage() {
   const [team, setTeam] = useState<Team | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [memberships, setMemberships] = useState<TeamMembership[]>([]);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedRole, setSelectedRole] = useState("developer");
 
   useEffect(() => {
       const loadTeam = async () => {
@@ -50,10 +61,17 @@ function TeamWorkspacePage() {
           const taskData =
             await getTasks();
 
+          const membershipData =
+            await getTeamMembers(
+              Number(id)
+            );
+
 
           setTeam(data);
           setUsers(userData);
           setTasks(taskData);
+          setMemberships(membershipData);
+          
         } catch (error) {
           console.error(error);
         }
@@ -83,7 +101,71 @@ function TeamWorkspacePage() {
     (task) => task.status === "done"
   );
 
+  const handleAddMember = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await addTeamMember(
+        Number(id),
+        Number(selectedUser),
+        selectedRole
+      );
+
+      const updatedMembers =
+        await getTeamMembers(
+          Number(id)
+        );
+
+      setMemberships(
+        updatedMembers
+      );
+
+      setSelectedUser("");
+      setSelectedRole(
+        "developer"
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
  
+  const reloadMembers = async () => {
+  const data = await getTeamMembers(
+    Number(id)
+  );
+
+  setMemberships(data);
+};
+
+const handleRoleChange = async (
+  membershipId: number,
+  role: string
+) => {
+  try {
+    await updateTeamMember(
+      membershipId,
+      role
+    );
+
+    await reloadMembers();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const handleRemoveMember = async (
+  membershipId: number
+) => {
+  try {
+    await deleteTeamMember(
+      membershipId
+    );
+
+    await reloadMembers();
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   if (!team) {
     return (
@@ -160,38 +242,171 @@ function TeamWorkspacePage() {
         </div>
 
 
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold text-white">
-            Team Members
-          </h2>
+       
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold text-black">
+              Team Members
+            </h2>
 
-          <div className="mt-3 space-y-2">
-            {team.members.map(
-              (memberId) => {
-                const user =
-                  users.find(
-                    (u) =>
-                      u.id === memberId
-                  );
-
-                return (
+            <div className="mt-3 space-y-2">
+              {memberships.map((membership) => (
                   <div
-                    key={memberId}
-                    className="rounded-lg bg-slate-800 p-3 text-white"
+                    key={membership.id}
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      rounded-lg
+                      bg-slate-800
+                      p-3
+                      text-white
+                    "
                   >
-                    {user
-                      ? user.username
-                      : `User #${memberId}`}
+                    <span>
+                      {membership.username}
+                    </span>
+
+                    <div className="flex gap-2">
+
+                      <select
+                        value={membership.role}
+                        onChange={(e) =>
+                          handleRoleChange(
+                            membership.id,
+                            e.target.value
+                          )
+                        }
+                        className="
+                          rounded-lg
+                          bg-slate-700
+                          px-2
+                          py-1
+                        "
+                      >
+                        <option value="lead">
+                          Lead
+                        </option>
+
+                        <option value="developer">
+                          Developer
+                        </option>
+
+                        <option value="tester">
+                          Tester
+                        </option>
+
+                        <option value="designer">
+                          Designer
+                        </option>
+                      </select>
+
+                      <button
+                        onClick={() =>
+                          handleRemoveMember(
+                            membership.id
+                          )
+                        }
+                        className="
+                          rounded-lg
+                          bg-red-600
+                          px-3
+                          py-1
+                        "
+                      >
+                        Remove
+                      </button>
+
+                    </div>
                   </div>
-                );
-              }
-            )}
+                ))}
+            </div>
           </div>
-        </div>
+
+
+          <div className="mt-4 flex gap-3 flex-wrap">
+
+            <select
+              value={selectedUser}
+              onChange={(e) =>
+                setSelectedUser(
+                  e.target.value
+                )
+              }
+              className="
+                rounded-lg
+                bg-slate-700
+                px-3
+                py-2
+                text-white
+              "
+            >
+              <option value="">
+                Select User
+              </option>
+
+              {users.map((user) => (
+                <option
+                  key={user.id}
+                  value={user.id}
+                >
+                  {user.username}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedRole}
+              onChange={(e) =>
+                setSelectedRole(
+                  e.target.value
+                )
+              }
+              className="
+                rounded-lg
+                bg-slate-700
+                px-3
+                py-2
+                text-white
+              "
+            >
+              <option value="lead">
+                Lead
+              </option>
+
+              <option value="developer">
+                Developer
+              </option>
+
+              <option value="tester">
+                Tester
+              </option>
+
+              <option value="designer">
+                Designer
+              </option>
+            </select>
+
+            <button
+              onClick={
+                handleAddMember
+              }
+              className="
+                rounded-lg
+                bg-blue-600
+                px-4
+                py-2
+                text-white
+              "
+            >
+              Add Member
+            </button>
+
+          </div>
+                  
 
 
         <div className="mt-8">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-black">
             Team Tasks
           </h2>
 

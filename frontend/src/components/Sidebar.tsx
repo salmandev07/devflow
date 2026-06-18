@@ -5,6 +5,7 @@ import {
   CheckSquare,
   Columns3,
   Bell,
+  FileText,
 } from "lucide-react";
 
 function Sidebar() {
@@ -61,6 +62,14 @@ function Sidebar() {
         >
           <Bell size={20} />
           Notifications
+        </a>
+
+        <a
+          href="/reports"
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 transition-all duration-300"
+        >
+          <FileText size={20} />
+          Reports
         </a>
       </nav>
     </aside>

@@ -12,6 +12,7 @@ import TeamWorkspacePage from "../pages/dashboard/TeamWorkspacePage";
 import ProjectDetailsPage from "../pages/dashboard/ProjectDetailsPage";
 import TaskDetailsPage from "../pages/dashboard/TaskDetailsPage";
 import NotificationsPage from "../pages/dashboard/NotificationsPage";
+import ReportsPage from "../pages/dashboard/ReportsPage";
 
 function AppRoutes() {
   return (
@@ -97,6 +98,11 @@ function AppRoutes() {
             <NotificationsPage />
           </ProtectedRoute>
         }
+      />
+
+      <Route
+        path="/reports"
+        element={<ReportsPage />}
       />
 
       </Routes>
