@@ -29,7 +29,7 @@ export function SkeletonChart() {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5 flex flex-col gap-4">
       <SkeletonBlock className="h-4 w-28" />
-      <SkeletonBlock className="h-[200px] w-full rounded-lg" />
+      <SkeletonBlock className="h-50 w-full rounded-lg" />
     </div>
   );
 }
@@ -148,7 +148,7 @@ export function SkeletonKanbanCard() {
 
 export function SkeletonKanbanColumn() {
   return (
-    <div className="min-h-[550px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3">
+    <div className="min-h-137.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SkeletonBlock className="h-2 w-2 rounded-full" />
