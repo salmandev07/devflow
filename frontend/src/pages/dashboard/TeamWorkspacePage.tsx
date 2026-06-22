@@ -5,6 +5,11 @@ import { getTeam } from "../../services/teamService";
 import { getUsers } from "../../services/userService";
 import { getTasks } from "../../services/taskService";
 import { getTeamMembers, addTeamMember, updateTeamMember, deleteTeamMember, } from "../../services/teamMembershipService";
+import { SkeletonTeamWorkspace } from "../../components/SkeletonLoader";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Button from "../../components/Button";
+import { useToast } from "../../hooks/useToast";
+import { validateTeamMember } from "../../utils/validation";
 
 
 type Team = {
@@ -38,42 +43,36 @@ type TeamMembership = {
 };
 
 function TeamWorkspacePage() {
-
-  
+  const { addToast } = useToast();
   const { id } = useParams();
   const [team, setTeam] = useState<Team | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [memberships, setMemberships] = useState<TeamMembership[]>([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedRole, setSelectedRole] = useState("developer");
-
+  const [confirmRemoveMember, setConfirmRemoveMember] = useState<number | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
       const loadTeam = async () => {
+        setLoading(true);
         try {
-          const data = await getTeam(
-            Number(id)
-          );
-
-          const userData =
-            await getUsers();
-          
-          const taskData =
-            await getTasks();
-
-          const membershipData =
-            await getTeamMembers(
-              Number(id)
-            );
-
+          const [data, userData, taskData, membershipData] = await Promise.all([
+            getTeam(Number(id)),
+            getUsers(),
+            getTasks(),
+            getTeamMembers(Number(id)),
+          ]);
 
           setTeam(data);
-          setUsers(userData);
+          setAllUsers(userData);
           setTasks(taskData);
           setMemberships(membershipData);
-          
         } catch (error) {
           console.error(error);
+        } finally {
+          setLoading(false);
         }
       };
       
@@ -104,27 +103,19 @@ function TeamWorkspacePage() {
   const handleAddMember = async () => {
     if (!selectedUser) return;
 
+    const existingIds = memberships.map((m) => m.user);
+    const dupError = validateTeamMember(Number(selectedUser), existingIds);
+    if (dupError) { addToast("error", dupError); return; }
+
     try {
-      await addTeamMember(
-        Number(id),
-        Number(selectedUser),
-        selectedRole
-      );
-
-      const updatedMembers =
-        await getTeamMembers(
-          Number(id)
-        );
-
-      setMemberships(
-        updatedMembers
-      );
-
+      await addTeamMember(Number(id), Number(selectedUser), selectedRole);
+      const updatedMembers = await getTeamMembers(Number(id));
+      setMemberships(updatedMembers);
       setSelectedUser("");
-      setSelectedRole(
-        "developer"
-      );
+      setSelectedRole("developer");
+      addToast("success", "Member added successfully");
     } catch (error) {
+      addToast("error", "Failed to add member");
       console.error(error);
     }
   };
@@ -153,26 +144,31 @@ const handleRoleChange = async (
   }
 };
 
-const handleRemoveMember = async (
-  membershipId: number
-) => {
+const handleRemoveMember = async (membershipId: number) => {
+  const membership = memberships.find((m) => m.id === membershipId);
+  if (membership && team && membership.user === team.owner) {
+    addToast("error", "Cannot remove the team owner. Transfer ownership first.");
+    setConfirmRemoveMember(null);
+    return;
+  }
+  setRemovingMember(true);
   try {
-    await deleteTeamMember(
-      membershipId
-    );
-
+    await deleteTeamMember(membershipId);
     await reloadMembers();
+    addToast("success", "Member removed successfully");
   } catch (error) {
+    addToast("error", "Failed to remove member");
     console.error(error);
+  } finally {
+    setRemovingMember(false);
+    setConfirmRemoveMember(null);
   }
 };
 
-  if (!team) {
+  if (loading || !team) {
     return (
       <DashboardLayout>
-        <p className="text-white">
-          Loading...
-        </p>
+        <SkeletonTeamWorkspace />
       </DashboardLayout>
     );
   }
@@ -180,62 +176,62 @@ const handleRemoveMember = async (
   return (
     <DashboardLayout>
       <div className="p-6">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           {team.name}
         </h1>
 
-        <p className="mt-3 text-slate-400">
+        <p className="mt-3 text-slate-600 dark:text-slate-400">
           Team ID: {team.id}
         </p>
 
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-slate-600 dark:text-slate-400">
           Owner: {
-            users.find(
+            allUsers.find(
               (user) => user.id === team.owner
             )?.username || `User #${team.owner}`
           }
         </p>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-slate-600 dark:text-slate-400">
           Members: {team.members.length}
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-4">
-          <div className="rounded-xl bg-slate-800 p-4">
-            <h3 className="text-slate-400">
+          <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+            <h3 className="text-sm text-slate-500 dark:text-slate-400">
               Total Tasks
             </h3>
 
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               {teamTasks.length}
             </p>
           </div>
 
-          <div className="rounded-xl bg-slate-800 p-4">
-            <h3 className="text-slate-400">
+          <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+            <h3 className="text-sm text-slate-500 dark:text-slate-400">
               Todo
             </h3>
 
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               {todoTasks.length}
             </p>
           </div>
 
-          <div className="rounded-xl bg-slate-800 p-4">
-            <h3 className="text-slate-400">
+          <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+            <h3 className="text-sm text-slate-500 dark:text-slate-400">
               In Progress
             </h3>
 
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               {inProgressTasks.length}
             </p>
           </div>
 
-          <div className="rounded-xl bg-slate-800 p-4">
-            <h3 className="text-slate-400">
+          <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+            <h3 className="text-sm text-slate-500 dark:text-slate-400">
               Done
             </h3>
 
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               {doneTasks.length}
             </p>
           </div>
@@ -244,7 +240,7 @@ const handleRemoveMember = async (
 
        
           <div className="mt-6">
-            <h2 className="text-xl font-semibold text-black">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               Team Members
             </h2>
 
@@ -252,15 +248,16 @@ const handleRemoveMember = async (
               {memberships.map((membership) => (
                   <div
                     key={membership.id}
-                    className="
-                      flex
-                      items-center
-                      justify-between
-                      rounded-lg
-                      bg-slate-800
-                      p-3
-                      text-white
-                    "
+                      className="
+                        flex
+                        items-center
+                        justify-between
+                        rounded-lg
+                        bg-white dark:bg-slate-800
+                        border border-slate-200 dark:border-slate-700
+                        p-3
+                        text-slate-900 dark:text-white
+                      "
                   >
                     <span>
                       {membership.username}
@@ -278,9 +275,11 @@ const handleRemoveMember = async (
                         }
                         className="
                           rounded-lg
-                          bg-slate-700
+                          bg-white dark:bg-slate-700
+                          border border-slate-200 dark:border-slate-600
                           px-2
                           py-1
+                          text-sm
                         "
                       >
                         <option value="lead">
@@ -300,21 +299,15 @@ const handleRemoveMember = async (
                         </option>
                       </select>
 
-                      <button
-                        onClick={() =>
-                          handleRemoveMember(
-                            membership.id
-                          )
-                        }
-                        className="
-                          rounded-lg
-                          bg-red-600
-                          px-3
-                          py-1
-                        "
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setConfirmRemoveMember(membership.id)}
+                        loading={removingMember && confirmRemoveMember === membership.id}
+                        disabled={removingMember && confirmRemoveMember === membership.id}
                       >
                         Remove
-                      </button>
+                      </Button>
 
                     </div>
                   </div>
@@ -334,24 +327,30 @@ const handleRemoveMember = async (
               }
               className="
                 rounded-lg
-                bg-slate-700
+                bg-white dark:bg-slate-700
+                border border-slate-200 dark:border-slate-600
                 px-3
                 py-2
-                text-white
+                text-sm
+                text-slate-900 dark:text-white
               "
             >
               <option value="">
-                Select User
+                {allUsers.length === 0
+                  ? "No users available"
+                  : "Select User"}
               </option>
 
-              {users.map((user) => (
-                <option
-                  key={user.id}
-                  value={user.id}
-                >
-                  {user.username}
-                </option>
-              ))}
+              {(() => {
+                const existingIds = memberships.map((m) => m.user);
+                return allUsers
+                  .filter((u) => !existingIds.includes(u.id))
+                  .map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.username}
+                    </option>
+                  ));
+              })()}
             </select>
 
             <select
@@ -363,10 +362,12 @@ const handleRemoveMember = async (
               }
               className="
                 rounded-lg
-                bg-slate-700
+                bg-white dark:bg-slate-700
+                border border-slate-200 dark:border-slate-600
                 px-3
                 py-2
-                text-white
+                text-sm
+                text-slate-900 dark:text-white
               "
             >
               <option value="lead">
@@ -386,27 +387,16 @@ const handleRemoveMember = async (
               </option>
             </select>
 
-            <button
-              onClick={
-                handleAddMember
-              }
-              className="
-                rounded-lg
-                bg-blue-600
-                px-4
-                py-2
-                text-white
-              "
-            >
+            <Button variant="primary" size="md" onClick={handleAddMember}>
               Add Member
-            </button>
+            </Button>
 
           </div>
                   
 
 
         <div className="mt-8">
-          <h2 className="text-xl font-semibold text-black">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             Team Tasks
           </h2>
 
@@ -419,13 +409,13 @@ const handleRemoveMember = async (
               .map((task) => (
                 <div
                   key={task.id}
-                  className="rounded-lg bg-slate-800 p-4"
+                  className="rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4"
                 >
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-slate-900 dark:text-white">
                     {task.title}
                   </h3>
 
-                  <p className="text-slate-400">
+                  <p className="text-slate-600 dark:text-slate-400">
                     {task.description}
                   </p>
 
@@ -441,6 +431,15 @@ const handleRemoveMember = async (
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmRemoveMember !== null}
+        onClose={() => setConfirmRemoveMember(null)}
+        onConfirm={() => confirmRemoveMember && handleRemoveMember(confirmRemoveMember)}
+        title="Remove Member"
+        message="Are you sure you want to remove this member from the team?"
+        confirmLabel="Remove"
+        loading={removingMember}
+      />
     </DashboardLayout>
   );
 }

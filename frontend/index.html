@@ -4,10 +4,213 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>DevFlow</title>
+    <script>
+      (function(){
+        try {
+          var isDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+          var stored = localStorage.getItem('theme');
+          if (stored === 'dark') isDark = true;
+          else if (stored === 'light') isDark = false;
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('ls-style').textContent = [
+              '#root { background:#020617; }',
+              '#loading-screen { background:#020617; }',
+              '.ls-sidebar { background:#0f172a; border-color:#1e293b; }',
+              '.ls-topbar { background:#0f172a; border-color:#1e293b; }',
+              '.ls-stat { background:#0f172a; border-color:#1e293b; }',
+              '.ls-chart { background:#0f172a; border-color:#1e293b; }',
+              '.ls-panel { background:#0f172a; border-color:#1e293b; }',
+              '.ls-shimmer { background:linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%);background-size:200% 100%; }',
+            ].join(' ');
+          }
+        } catch(e) {}
+      })();
+    </script>
+    <style id="ls-style">
+      /* ═══════════════════════════════════════════════
+         Loading screen – app shell skeleton
+         Replaced by React once the app mounts.
+         ═══════════════════════════════════════════════ */
+      html, body { margin:0; padding:0; height:100%; }
+      #root { min-height:100vh; background:#f8fafc; }
+      #loading-screen {
+        position: fixed; inset:0; z-index:9999;
+        display:flex; flex-direction:column;
+        background:#f8fafc;
+      }
+      /* ── Thin top bar ── */
+      #loading-screen::before {
+        content:""; position:absolute; top:0; left:-35%; width:35%; height:3px;
+        background:linear-gradient(90deg,transparent,#4f46e5,transparent);
+        animation:lsBar 1.4s ease-in-out infinite;
+        z-index:1;
+      }
+      @keyframes lsBar {
+        0%   { left:-35%; width:35%; }
+        50%  { left:28%;  width:50%; }
+        100% { left:100%; width:35%; }
+      }
+      /* ── App shell layout ── */
+      .ls-layout {
+        display:flex; flex:1; min-height:0;
+      }
+      /* ── Sidebar (desktop only) ── */
+      .ls-sidebar {
+        display:none;
+        width:240px; flex-shrink:0;
+        background:#f8fafc;
+        border-right:1px solid #e2e8f0;
+        padding:20px 16px;
+        flex-direction:column; gap:24px;
+      }
+      @media (min-width:1024px) { .ls-sidebar { display:flex; } }
+      .ls-logo {
+        height:28px; width:120px;
+        border-radius:6px;
+      }
+      .ls-nav-items {
+        display:flex; flex-direction:column; gap:10px;
+      }
+      .ls-nav-item {
+        height:36px; width:100%;
+        border-radius:8px;
+      }
+      /* ── Main area ── */
+      .ls-main {
+        display:flex; flex-direction:column; flex:1; min-width:0;
+      }
+      .ls-topbar {
+        height:56px; flex-shrink:0;
+        display:flex; align-items:center; justify-content:space-between;
+        padding:0 24px;
+        border-bottom:1px solid #e2e8f0;
+        background:#f8fafc;
+      }
+      .ls-topbar-left { display:flex; align-items:center; gap:16px; }
+      .ls-topbar-right { display:flex; align-items:center; gap:12px; }
+      .ls-search {
+        width:200px; height:36px;
+        border-radius:8px;
+      }
+      .ls-icon { width:32px; height:32px; border-radius:8px; }
+      /* ── Content area ── */
+      .ls-content {
+        flex:1; padding:24px 32px;
+        display:flex; flex-direction:column; gap:24px;
+      }
+      .ls-row { display:flex; gap:16px; }
+      .ls-stat-grid {
+        display:grid; grid-template-columns:repeat(4,1fr); gap:16px;
+      }
+      @media (max-width:768px) { .ls-stat-grid { grid-template-columns:repeat(2,1fr); } }
+      .ls-stat {
+        height:130px; border-radius:12px;
+        border:1px solid #e2e8f0; background:#f8fafc;
+        padding:20px;
+      }
+      .ls-stat-inner { display:flex; flex-direction:column; gap:16px; }
+      .ls-stat-header { display:flex; justify-content:space-between; }
+      .ls-stat-label { height:12px; width:64px; border-radius:4px; }
+      .ls-stat-icon  { height:28px; width:28px; border-radius:8px; }
+      .ls-stat-value { height:28px; width:48px; border-radius:6px; }
+      .ls-stat-desc  { height:10px; width:100px; border-radius:4px; }
+      .ls-chart-row {
+        display:grid; grid-template-columns:1fr 1fr; gap:16px;
+      }
+      @media (max-width:768px) { .ls-chart-row { grid-template-columns:1fr; } }
+      .ls-chart {
+        height:240px; border-radius:12px;
+        border:1px solid #e2e8f0;
+        background:#f8fafc; padding:20px;
+      }
+      .ls-chart-header { height:14px; width:100px; border-radius:4px; margin-bottom:16px; }
+      .ls-chart-body { height:170px; border-radius:8px; }
+      .ls-bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+      @media (max-width:768px) { .ls-bottom-row { grid-template-columns:1fr; } }
+      .ls-panel {
+        height:280px; border-radius:12px;
+        border:1px solid #e2e8f0;
+        background:#f8fafc; padding:20px;
+      }
+      .ls-panel-header { height:14px; width:120px; border-radius:4px; margin-bottom:16px; }
+      .ls-panel-items { display:flex; flex-direction:column; gap:12px; }
+      .ls-panel-item { height:36px; width:100%; border-radius:8px; }
+      /* ── Shimmer blocks ── */
+      .ls-shimmer {
+        background: linear-gradient(90deg,
+          #cbd5e1 25%,
+          #e2e8f0 50%,
+          #cbd5e1 75%
+        );
+        background-size: 200% 100%;
+        animation: lsShimmer 1.5s infinite;
+      }
+      @keyframes lsShimmer {
+        from { background-position: -200% 0; }
+        to   { background-position: 200% 0; }
+      }
+    </style>
+
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="loading-screen">
+        <div class="ls-layout">
+          <!-- Sidebar shell -->
+          <div class="ls-sidebar">
+            <div class="ls-logo ls-shimmer"></div>
+            <div class="ls-nav-items">
+              <div class="ls-nav-item ls-shimmer"></div>
+              <div class="ls-nav-item ls-shimmer"></div>
+              <div class="ls-nav-item ls-shimmer"></div>
+              <div class="ls-nav-item ls-shimmer"></div>
+              <div class="ls-nav-item ls-shimmer"></div>
+            </div>
+          </div>
+          <!-- Main area shell -->
+          <div class="ls-main">
+            <div class="ls-topbar">
+              <div class="ls-topbar-left">
+                <div class="ls-search ls-shimmer"></div>
+              </div>
+              <div class="ls-topbar-right">
+                <div class="ls-icon ls-shimmer"></div>
+                <div class="ls-icon ls-shimmer"></div>
+                <div class="ls-icon ls-shimmer"></div>
+              </div>
+            </div>
+            <div class="ls-content">
+              <!-- Stat cards -->
+              <div class="ls-stat-grid">
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+              </div>
+              <!-- Second stat row -->
+              <div class="ls-stat-grid">
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+                <div class="ls-stat"><div class="ls-stat-inner"><div class="ls-stat-header"><div class="ls-stat-label ls-shimmer"></div><div class="ls-stat-icon ls-shimmer"></div></div><div class="ls-stat-value ls-shimmer"></div><div class="ls-stat-desc ls-shimmer"></div></div></div>
+              </div>
+              <!-- Chart row -->
+              <div class="ls-chart-row">
+                <div class="ls-chart"><div class="ls-chart-header ls-shimmer"></div><div class="ls-chart-body ls-shimmer"></div></div>
+                <div class="ls-chart"><div class="ls-chart-header ls-shimmer"></div><div class="ls-chart-body ls-shimmer"></div></div>
+              </div>
+              <!-- Bottom row -->
+              <div class="ls-bottom-row">
+                <div class="ls-panel"><div class="ls-panel-header ls-shimmer"></div><div class="ls-panel-items"><div class="ls-panel-item ls-shimmer"></div><div class="ls-panel-item ls-shimmer"></div><div class="ls-panel-item ls-shimmer"></div><div class="ls-panel-item ls-shimmer"></div></div></div>
+                <div class="ls-panel"><div class="ls-panel-header ls-shimmer"></div><div class="ls-panel-items"><div class="ls-panel-item ls-shimmer"></div><div class="ls-panel-item ls-shimmer"></div><div class="ls-panel-item ls-shimmer"></div><div class="ls-panel-item ls-shimmer"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

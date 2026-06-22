@@ -23,7 +23,7 @@ class NotificationListView(
     def get_queryset(self):
         return Notification.objects.filter(
             user=self.request.user
-        )
+        ).order_by("-created_at")
 
 
 class NotificationDetailView(
@@ -40,4 +40,4 @@ class NotificationDetailView(
     def get_queryset(self):
         return Notification.objects.filter(
             user=self.request.user
-        )
+        ).order_by("-created_at")

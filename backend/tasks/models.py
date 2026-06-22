@@ -46,7 +46,7 @@ class Task(models.Model):
 
     team = models.ForeignKey(
         Team,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="tasks",
         null=True,
         blank=True

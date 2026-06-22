@@ -1,338 +1,249 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import TaskStatusChart from "../../components/TaskStatusChart";
-import { getProjects } from "../../services/projectService";
-import { getTeams } from "../../services/teamService";
-import { getTasks } from "../../services/taskService";
-import { getAllSubtasks, } from "../../services/subtaskService";
 import TaskPriorityChart from "../../components/TaskPriorityChart";
 import ActivityFeed from "../../components/ActivityFeed";
-
+import { StatusBadge, PriorityBadge } from "../../components/Badge";
+import { SkeletonDashboard } from "../../components/SkeletonLoader";
+import { getProjects } from "../../services/projectService";
+import { getTasks } from "../../services/taskService";
+import { getAllSubtasks } from "../../services/subtaskService";
+import { useTeams } from "../../hooks/useTeams";
+import {
+  FolderKanban, Users, CheckSquare, CheckCircle2,
+  Clock, ListTodo, TrendingUp, AlertTriangle,
+  CalendarClock, ArrowRight,
+} from "lucide-react";
 
 type Task = {
-  id: number;
-  title: string;
-  status: string;
-  priority: string;
-  estimated_hours: number;
-  actual_hours: number;
-  assigned_to_username?: string;
-  due_date?: string | null;
+  id: number; title: string; status: string; priority: string;
+  estimated_hours: string; actual_hours: string;
+  assigned_to_username?: string; due_date?: string | null;
 };
+type Subtask = { id: number; completed: boolean };
 
-type Subtask = {
-  id: number;
-  completed: boolean;
-};
+function getUsernameFromToken(): string {
+  try {
+    const t = localStorage.getItem("accessToken");
+    if (!t) return "there";
+    return JSON.parse(atob(t.split(".")[1])).username || "there";
+  } catch { return "there"; }
+}
 
-function DashboardPage() {
+function StatCard({
+  label, value, icon: Icon, bg, description,
+}: { label: string; value: string | number; icon: React.ElementType; bg: string; description?: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 group">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">{label}</span>
+        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}>
+          <Icon size={15} className="text-white" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">{value}</p>
+      {description && <p className="text-xs text-slate-500 dark:text-slate-500 mt-1.5">{description}</p>}
+    </div>
+  );
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
   const [projectCount, setProjectCount] = useState(0);
-  const [teamCount, setTeamCount] = useState(0);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const totalProjects = projectCount;
-  const totalTeams = teamCount;
-  const totalTasks = tasks.length;
-  const totalSubtasks = subtasks.length;
-
-  const totalEstimatedHours =
-  tasks.reduce(
-    (sum, task) =>
-      sum + task.estimated_hours,
-    0
-  );
-
-const totalActualHours =
-  tasks.reduce(
-    (sum, task) =>
-      sum + task.actual_hours,
-    0
-  );
-
-const productivity =
-  totalEstimatedHours > 0
-    ? Math.round(
-        (totalActualHours /
-          totalEstimatedHours) *
-          100
-      )
-    : 0;
-
-  const completedSubtasks = subtasks.filter(
-    (subtask) => subtask.completed
-  ).length;
-
-  const subtaskCompletionPercentage =
-    totalSubtasks === 0
-      ? 0
-      : Math.round(
-          (completedSubtasks / totalSubtasks) * 100
-        );
-
-  const completedTasks = tasks.filter(
-    (task) => task.status === "done"
-  ).length;
-
-  const todoTasks = tasks.filter(
-    (task) => task.status === "todo"
-  ).length;
-
-  const progressTasks = tasks.filter(
-    (task) => task.status === "progress"
-  ).length;
-
-  const lowPriorityTasks = tasks.filter(
-    (task) => task.priority === "low"
-  ).length;
-
-  const mediumPriorityTasks = tasks.filter(
-    (task) => task.priority === "medium"
-  ).length;
-
-  const highPriorityTasks = tasks.filter(
-    (task) => task.priority === "high"
-).length;
+  const { teamCount, loading: teamsLoading } = useTeams();
+  const navigate = useNavigate();
+  const username = getUsernameFromToken();
 
   useEffect(() => {
-    const loadDashboard = async () => {
+    const load = async () => {
       try {
-        const projects = await getProjects();
-        const teams = await getTeams();
-        const taskData = await getTasks();
-
-        const allSubtasks = await getAllSubtasks();
-
-
+        const [projects, taskData, allSubtasks] = await Promise.all([
+          getProjects(), getTasks(), getAllSubtasks(),
+        ]);
         setProjectCount(projects.length);
-        setTeamCount(teams.length);
         setTasks(taskData);
         setSubtasks(allSubtasks);
-      } catch (error) {
-        console.error(error);
-      }
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
     };
-
-    void loadDashboard();
+    void load();
   }, []);
 
+  // Derived metrics
+  const totalTasks = tasks.length;
+  const completedTasks  = tasks.filter((t) => t.status === "done").length;
+  const progressTasks   = tasks.filter((t) => t.status === "progress").length;
+  const todoTasks       = tasks.filter((t) => t.status === "todo").length;
+  const lowPrio    = tasks.filter((t) => t.priority === "low").length;
+  const mediumPrio = tasks.filter((t) => t.priority === "medium").length;
+  const highPrio   = tasks.filter((t) => t.priority === "high").length;
+
+  const totalEst = tasks.reduce((s, t) => s + Number(t.estimated_hours || 0), 0);
+  const totalAct = tasks.reduce((s, t) => s + Number(t.actual_hours || 0), 0);
+  const productivity = totalEst > 0 ? Math.round((totalAct / totalEst) * 100) : 0;
+
+  const completedSubs = subtasks.filter((s) => s.completed).length;
+  const subtaskPct = subtasks.length > 0 ? Math.round((completedSubs / subtasks.length) * 100) : 0;
+
+  const now = new Date();
   const upcomingTasks = tasks
-  .filter((task) => task.due_date)
-  .sort(
-    (a, b) =>
-      new Date(a.due_date!).getTime() -
-      new Date(b.due_date!).getTime()
-  )
-  .slice(0, 5);
+    .filter((t) => t.due_date)
+    .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
+    .slice(0, 5);
 
   const overdueTasks = tasks.filter(
-  (task) =>
-    task.due_date &&
-    task.status !== "done" &&
-    new Date(task.due_date) < new Date()
-);
+    (t) => t.due_date && t.status !== "done" && new Date(t.due_date) < now,
+  );
+
+  const today = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   return (
     <DashboardLayout>
-      <div>
-        <h1 className="text-4xl font-bold text-black">
-          Dashboard
-        </h1>
+      <div className="page-enter space-y-6">
 
-        <p className="mt-2 text-slate-400">
-          Manage projects, teams and tasks.
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-
-      <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[ 
-            ["Projects", totalProjects],
-            ["Teams", totalTeams],
-            ["Tasks", totalTasks],
-            ["Estimated Hours", totalEstimatedHours],
-
-            ["Actual Hours", totalActualHours],
-
-            ["Productivity %", `${productivity}%`],
-
-            ["Subtasks", totalSubtasks],
-
-            ["Completed", completedTasks],
-
-            ["Completed Subtasks", completedSubtasks],
-
-            [
-              "Subtask %",
-              `${subtaskCompletionPercentage}%`,
-            ],
-
-            ["Todo", todoTasks],
-
-            ["In Progress", progressTasks],
-
-        ].map(([title, count]) => (
-          <div
-            key={String(title)}
-            className="
-              bg-slate-900
-              border
-              border-slate-800
-              rounded-2xl
-              p-6
-              shadow-xl
-              hover:scale-105
-              transition-all
-              duration-300
-            "
-          >
-            <h3 className="text-slate-400">
-              {title}
-            </h3>
-
-            <p className="mt-3 text-4xl font-bold text-white">
-              {count}
-            </p>
+        {/* ── Welcome Banner ── */}
+        <div className="flex items-center justify-between rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-5">
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Good {now.getHours() < 12 ? "morning" : now.getHours() < 18 ? "afternoon" : "evening"}, {username} 👋
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-500 mt-0.5">{today} · Here's your workspace overview</p>
           </div>
-        ))}
-      </div>
-
-
-      <h2 className="text-2xl font-bold text-black mt-10">
-        Upcoming Deadlines
-      </h2>
-
-      <div className="mt-4 space-y-3">
-        {upcomingTasks.map((task) => (
-          <div
-            key={task.id}
-            className="bg-slate-900 p-4 rounded-xl"
+          <button
+            onClick={() => navigate("/tasks")}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
           >
-            <p className="text-white font-semibold">
-              {task.title}
-            </p>
-
-            <p className="text-orange-400 text-sm">
-              📅 {task.due_date}
-            </p>
-          </div>
-        ))}
-      </div>
-
-{overdueTasks.length > 0 && (
-  
-  <div className="mt-10">
-    <h2 className="mb-4 text-2xl font-bold text-red-400">
-      ⚠ Overdue Tasks
-    </h2>
-
-    <div className="space-y-3">
-      {overdueTasks.map((task) => (
-        <div
-          key={task.id}
-          className="
-            rounded-xl
-            border
-            border-red-700
-            bg-red-950
-            p-4
-          "
-        >
-          <p className="font-semibold text-white">
-            {task.title}
-          </p>
-
-          <p className="text-red-300 text-sm">
-            Due: {task.due_date}
-          </p>
+            View Tasks <ArrowRight size={14} />
+          </button>
         </div>
-      ))}
-      
-    </div>
-  </div>
-)}
 
-    <div className="mt-10 grid gap-6 lg:grid-cols-2">
-      <TaskStatusChart
-        todo={todoTasks}
-        inProgress={progressTasks}
-        done={completedTasks}
-      />
+        {loading || teamsLoading ? (
+          <SkeletonDashboard />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="Projects"   value={projectCount}  icon={FolderKanban}  bg="bg-indigo-600" description="Active projects" />
+              <StatCard label="Teams"      value={teamCount}     icon={Users}         bg="bg-violet-600" description="Collaborating teams" />
+              <StatCard label="Total Tasks" value={totalTasks}   icon={CheckSquare}   bg="bg-sky-600"    description="All tasks tracked" />
+              <StatCard label="Completed"  value={completedTasks} icon={CheckCircle2} bg="bg-emerald-600" description={`${totalTasks > 0 ? Math.round((completedTasks/totalTasks)*100) : 0}% completion rate`} />
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="In Progress" value={progressTasks}  icon={Clock}        bg="bg-amber-600"  description="Active tasks" />
+              <StatCard label="To Do"       value={todoTasks}       icon={ListTodo}     bg="bg-slate-300 dark:bg-slate-600"  description="Pending tasks" />
+              <StatCard label="Est. Hours"  value={`${totalEst.toFixed(1)}h`} icon={CalendarClock} bg="bg-blue-600" description={`${totalAct.toFixed(1)}h actual`} />
+              <StatCard label="Productivity" value={`${productivity}%`} icon={TrendingUp} bg="bg-indigo-600" description={`Subtask completion: ${subtaskPct}%`} />
+            </div>
 
-      <TaskPriorityChart
-        low={lowPriorityTasks}
-        medium={mediumPriorityTasks}
-        high={highPriorityTasks}
-      />
-    </div>
+            {/* Charts */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <TaskStatusChart todo={todoTasks} inProgress={progressTasks} done={completedTasks} />
+              <TaskPriorityChart low={lowPrio} medium={mediumPrio} high={highPrio} />
+            </div>
 
-    <div className="mt-10">
-      <ActivityFeed />
-    </div>
-
-
-      {/* Recent Tasks */}
-
-      <div className="mt-10">
-        <h2 className="mb-6 text-2xl font-bold text-black">
-          Recent Tasks
-        </h2>
-
-        <div className="grid gap-4">
-          {tasks.slice(0, 5).map((task) => (
-            <div
-              key={task.id}
-              className="
-                bg-slate-900
-                border
-                border-slate-800
-                rounded-xl
-                p-4
-              "
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-white">
-                  {task.title}
-                </h3>
-
-                <span
-                  className={`px-3 py-1 rounded-full text-xs text-white ${
-                    task.priority === "high"
-                      ? "bg-red-600"
-                      : task.priority === "medium"
-                      ? "bg-yellow-600"
-                      : "bg-green-600"
-                  }`}
-                >
-                  {task.priority}
-                </span>
+            {/* Overdue Alert */}
+            {overdueTasks.length > 0 && (
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle size={16} className="text-rose-400" />
+                  <h2 className="text-sm font-semibold text-rose-300">
+                    {overdueTasks.length} Overdue {overdueTasks.length === 1 ? "Task" : "Tasks"}
+                  </h2>
+                </div>
+                <div className="space-y-2">
+                  {overdueTasks.slice(0, 4).map((task) => (
+                    <div
+                      key={task.id}
+                      onClick={() => navigate(`/tasks/${task.id}`)}
+                      className="flex items-center justify-between rounded-lg border border-rose-500/10 bg-rose-500/5 px-4 py-2.5 cursor-pointer hover:bg-rose-500/10 transition-colors"
+                    >
+                      <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{task.title}</span>
+                      <span className="text-xs text-rose-400">Due {formatDate(task.due_date!)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
 
-              <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-400">
-                <span>
-                  Status: {task.status}
-                </span>
-
-                <span>
-                  Assigned:{" "}
-                  {task.assigned_to_username ??
-                    "Unassigned"}
-                </span>
-
-                {task.due_date && (
-                  <span>
-                    Due: {task.due_date}
-                  </span>
+            {/* Upcoming + Activity */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <CalendarClock size={15} className="text-indigo-400" />
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Upcoming Deadlines</h3>
+                </div>
+                {upcomingTasks.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-500 py-6 text-center">No upcoming deadlines</p>
+                ) : (
+                  <div className="space-y-2">
+                    {upcomingTasks.map((task) => {
+                      const isOverdue = new Date(task.due_date!) < now && task.status !== "done";
+                      return (
+                        <div
+                          key={task.id}
+                          onClick={() => navigate(`/tasks/${task.id}`)}
+                          className="flex items-center justify-between rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 cursor-pointer transition-colors group"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <StatusBadge status={task.status} />
+                            <span className="text-sm text-slate-700 dark:text-slate-300 truncate group-hover:text-slate-900 dark:hover:text-slate-100">{task.title}</span>
+                          </div>
+                          <span className={`text-xs shrink-0 ml-2 font-medium ${isOverdue ? "text-rose-400" : "text-slate-500 dark:text-slate-500"}`}>
+                            {formatDate(task.due_date!)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              
-              
+              <ActivityFeed />
             </div>
-          ))}
-        </div>
+
+            {/* Recent Tasks */}
+            {tasks.length > 0 && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Recent Tasks</h3>
+                  <button
+                    onClick={() => navigate("/tasks")}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                  >
+                    View all <ArrowRight size={12} />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-800/60">
+                  {tasks.slice(0, 5).map((task) => (
+                    <div
+                      key={task.id}
+                      onClick={() => navigate(`/tasks/${task.id}`)}
+                      className="flex items-center gap-4 px-5 py-3 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{task.title}</p>
+                        {task.assigned_to_username && (
+                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">{task.assigned_to_username}</p>
+                        )}
+                      </div>
+                      <PriorityBadge priority={task.priority} />
+                      <StatusBadge status={task.status} />
+                      {task.due_date && (
+                        <span className="hidden sm:block text-xs text-slate-500 dark:text-slate-500 shrink-0">{formatDate(task.due_date)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </DashboardLayout>
   );
 }
-
-export default DashboardPage;

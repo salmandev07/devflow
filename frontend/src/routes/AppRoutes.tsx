@@ -74,7 +74,11 @@ function AppRoutes() {
 
         <Route
         path="/teams/:id"
-        element={<TeamWorkspacePage />}
+        element={
+          <ProtectedRoute>
+            <TeamWorkspacePage />
+          </ProtectedRoute>
+        }
       />
       
       <Route
@@ -88,7 +92,11 @@ function AppRoutes() {
       
       <Route
         path="/tasks/:id"
-        element={<TaskDetailsPage />}
+        element={
+          <ProtectedRoute>
+            <TaskDetailsPage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
@@ -102,7 +110,11 @@ function AppRoutes() {
 
       <Route
         path="/reports"
-        element={<ReportsPage />}
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
+          </ProtectedRoute>
+        }
       />
 
       </Routes>

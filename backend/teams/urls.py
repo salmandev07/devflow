@@ -5,27 +5,22 @@ from .views import (
     TeamDetailView,
     TeamMembershipListCreateView,
     TeamMembershipDetailView,
+    TeamTransferOwnershipView,
 )
 
 urlpatterns = [
+    path("", TeamListCreateView.as_view(), name="teams"),
+    path("<int:pk>/", TeamDetailView.as_view(), name="team-detail"),
     path(
-        "",
-        TeamListCreateView.as_view(),
-        name="teams",
+        "<int:pk>/transfer-ownership/",
+        TeamTransferOwnershipView.as_view(),
+        name="team-transfer-ownership",
     ),
-
-    path(
-        "<int:pk>/",
-        TeamDetailView.as_view(),
-        name="team-detail",
-    ),
-
     path(
         "<int:team_id>/members/",
         TeamMembershipListCreateView.as_view(),
         name="team-members",
     ),
-
     path(
         "memberships/<int:pk>/",
         TeamMembershipDetailView.as_view(),
