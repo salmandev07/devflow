@@ -172,7 +172,7 @@ export default function ProjectsPage() {
           <Input label="Project Name" placeholder="e.g. DevFlow Backend API" value={name}
             onChange={(e) => setName(e.target.value)} required />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description <span className="text-slate-600 font-normal">(optional)</span></label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description <span className="text-slate-600 dark:text-slate-400 font-normal">(optional)</span></label>
             <textarea
               placeholder="Describe what this project is about…"
               value={description}

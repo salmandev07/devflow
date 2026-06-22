@@ -238,6 +238,7 @@ export default function ProjectDetailsPage() {
             <EmptyState icon={<ListTodo size={28} />} title="No tasks" description="This project has no tasks yet." />
           ) : (
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
@@ -265,6 +266,7 @@ export default function ProjectDetailsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

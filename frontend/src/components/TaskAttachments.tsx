@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Paperclip, Upload, Trash2, FileText, Image, File } from "lucide-react";
 import { getAttachments, uploadAttachment, deleteAttachment } from "../services/attachmentService";
+import { useToast } from "../hooks/useToast";
 import Avatar from "./Avatar";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -24,24 +25,27 @@ function getFileName(url: string) {
 }
 
 export default function TaskAttachments({ taskId }: Props) {
+  const { addToast } = useToast();
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try { setAttachments(await getAttachments(taskId)); }
-      catch (err) { console.error(err); }
+      catch (err) { console.error(err); addToast("error", "Failed to load attachments"); }
+      finally { setLoading(false); }
     };
     load();
   }, [taskId]);
 
   const loadAttachments = async () => {
     try { setAttachments(await getAttachments(taskId)); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to load attachments"); }
   };
 
   const handleUpload = async () => {
@@ -51,7 +55,7 @@ export default function TaskAttachments({ taskId }: Props) {
       await uploadAttachment(taskId, file);
       setFile(null);
       await loadAttachments();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to upload attachment"); }
     finally { setUploading(false); }
   };
 
@@ -61,7 +65,7 @@ export default function TaskAttachments({ taskId }: Props) {
     try {
       await deleteAttachment(confirmDeleteId);
       setAttachments((prev) => prev.filter((a) => a.id !== confirmDeleteId));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to delete attachment"); }
     finally { setDeleting(false); setConfirmDeleteId(null); }
   };
 
@@ -98,7 +102,7 @@ export default function TaskAttachments({ taskId }: Props) {
           }
         `}
       >
-        <Upload size={24} className={`mx-auto mb-2 ${dragOver ? "text-indigo-400" : "text-slate-600"}`} />
+        <Upload size={24} className={`mx-auto mb-2 ${dragOver ? "text-indigo-400" : "text-slate-500 dark:text-slate-400"}`} />
 
         {file ? (
           <div className="flex items-center justify-center gap-3">
@@ -128,10 +132,19 @@ export default function TaskAttachments({ taskId }: Props) {
       </div>
 
       {/* Attachment list */}
-      {attachments.length === 0 ? (
+      {loading ? (
+        <div className="space-y-2">
+          {[1,2,3].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 px-4 py-3">
+              <div className="skeleton h-5 w-5 shrink-0" />
+              <div className="skeleton h-3 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : attachments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          <Paperclip size={28} className="text-slate-700 mb-2" />
-          <p className="text-sm text-slate-600">No attachments yet</p>
+          <Paperclip size={28} className="text-slate-400 dark:text-slate-500 mb-2" />
+          <p className="text-sm text-slate-500 dark:text-slate-500">No attachments yet</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -159,7 +172,7 @@ export default function TaskAttachments({ taskId }: Props) {
                 <button
                   onClick={() => setConfirmDeleteId(a.id)}
                   disabled={deleting && confirmDeleteId === a.id}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-600 hover:text-rose-400 transition-all disabled:opacity-50"
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-500 dark:text-slate-500 hover:text-rose-400 transition-all disabled:opacity-50"
                 >
                   {deleting && confirmDeleteId === a.id ? (
                     <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-400 border-t-transparent" />

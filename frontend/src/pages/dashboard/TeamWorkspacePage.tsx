@@ -71,6 +71,7 @@ function TeamWorkspacePage() {
           setMemberships(membershipData);
         } catch (error) {
           console.error(error);
+          addToast("error", "Failed to load team data");
         } finally {
           setLoading(false);
         }
@@ -141,6 +142,7 @@ const handleRoleChange = async (
     await reloadMembers();
   } catch (error) {
     console.error(error);
+    addToast("error", "Failed to update member role");
   }
 };
 

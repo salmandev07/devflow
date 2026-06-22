@@ -27,7 +27,7 @@ class CommentListCreateView(
     def get_queryset(self):
         task_id = self.kwargs["task_id"]
 
-        return Comment.objects.filter(
+        return Comment.objects.select_related("user").filter(
             task_id=task_id,
             task__in=_accessible_tasks(self.request.user),
         ).order_by("-created_at")

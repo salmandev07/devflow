@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bell, CheckCheck, Trash2, Inbox } from "lucide-react";
 import { getNotifications, markAsRead, deleteNotification } from "../services/notificationService";
+import { useToast } from "../hooks/useToast";
 import { SkeletonNotificationList } from "./SkeletonLoader";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -11,6 +12,7 @@ type Notification = {
 };
 
 export default function NotificationCenter() {
+  const { addToast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -19,7 +21,7 @@ export default function NotificationCenter() {
   useEffect(() => {
     const load = async () => {
       try { setNotifications(await getNotifications()); }
-      catch (err) { console.error(err); }
+      catch (err) { console.error(err); addToast("error", "Failed to load notifications"); }
       finally { setLoading(false); }
     };
     load();
@@ -27,12 +29,12 @@ export default function NotificationCenter() {
 
   const loadNotifications = async () => {
     try { setNotifications(await getNotifications()); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to load notifications"); }
   };
 
   const handleRead = async (id: number) => {
     try { await markAsRead(id); await loadNotifications(); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to mark notification as read"); }
   };
 
   const handleDelete = async (id: number) => {
@@ -40,7 +42,7 @@ export default function NotificationCenter() {
     try {
       await deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to delete notification"); }
     finally { setDeleting(false); setConfirmDeleteId(null); }
   };
 
@@ -73,10 +75,10 @@ export default function NotificationCenter() {
         /* Empty state */
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-4">
-            <Inbox size={28} className="text-slate-600" />
+            <Inbox size={28} className="text-slate-400 dark:text-slate-500" />
           </div>
           <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 mb-1">No notifications</h3>
-          <p className="text-sm text-slate-600 max-w-xs">You're all caught up. New notifications will appear here.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-500 max-w-xs">You're all caught up. New notifications will appear here.</p>
         </div>
       ) : (
         /* Notification list */

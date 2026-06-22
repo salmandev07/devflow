@@ -156,7 +156,7 @@ export default function TeamsPage() {
                   <div className="mb-3">
                     <p className="text-xs font-medium text-slate-500 dark:text-slate-500 mb-2 uppercase tracking-wide">Members ({team.members.length})</p>
                     {team.members.length === 0 ? (
-                      <p className="text-xs text-slate-600 italic">No members yet</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 italic">No members yet</p>
                     ) : (
                       <div className="flex flex-wrap gap-1.5">
                         {team.members.map((memberId) => {
@@ -192,7 +192,7 @@ export default function TeamsPage() {
                         <option value="">+ Add member…</option>
                         {nonMembers.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
                       </select>
-                      <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                      <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 pointer-events-none" />
                     </div>
                   )}
 

@@ -4,6 +4,7 @@ import { ChevronDown, Download, FileText, BarChart3, CheckCircle2, Clock, ListTo
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { getProjects } from "../../services/projectService";
 import { getProjectReport } from "../../services/reportService";
+import { useToast } from "../../hooks/useToast";
 import PageHeader from "../../components/PageHeader";
 import Button from "../../components/Button";
 import { SkeletonReportResult } from "../../components/SkeletonLoader";
@@ -29,6 +30,7 @@ function MetricCard({ label, value, icon: Icon, color }: { label: string; value:
 }
 
 export default function ReportsPage() {
+  const { addToast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [report, setReport] = useState<Report | null>(null);
@@ -37,7 +39,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const load = async () => {
       try { setProjects(await getProjects()); }
-      catch (err) { console.error(err); }
+      catch (err) { console.error(err); addToast("error", "Failed to load projects"); }
     };
     void load();
   }, []);
@@ -46,7 +48,7 @@ export default function ReportsPage() {
     if (!selectedProject) return;
     setLoading(true);
     try { setReport(await getProjectReport(Number(selectedProject))); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to generate report"); }
     finally { setLoading(false); }
   };
 
@@ -121,7 +123,7 @@ export default function ReportsPage() {
               <FileText size={28} />
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">No report generated</p>
-            <p className="text-xs text-slate-600">Select a project and click Generate</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Select a project and click Generate</p>
           </div>
         ) : (
           <>
@@ -139,7 +141,7 @@ export default function ReportsPage() {
                   style={{ width: `${completionPct}%` }}
                 />
               </div>
-              <p className="text-xs text-slate-600 mt-2">Task completion rate</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">Task completion rate</p>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               <MetricCard label="Total Tasks" value={report.total_tasks} icon={BarChart3} color="bg-indigo-600" />

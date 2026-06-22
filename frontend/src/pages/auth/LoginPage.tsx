@@ -74,7 +74,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer quote */}
-        <p className="text-xs text-slate-600 relative">
+        <p className="text-xs text-slate-500 dark:text-slate-500 relative">
           Built for developers, by developers.
         </p>
       </div>

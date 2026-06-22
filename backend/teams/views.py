@@ -40,7 +40,7 @@ class TeamMembershipListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         team_id = self.kwargs["team_id"]
-        return TeamMembership.objects.filter(
+        return TeamMembership.objects.select_related("user").filter(
             team_id=team_id,
             team__in=Team.objects.filter(
                 Q(owner=self.request.user) | Q(members=self.request.user)
@@ -57,7 +57,7 @@ class TeamMembershipDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return TeamMembership.objects.filter(
+        return TeamMembership.objects.select_related("user").filter(
             team__in=Team.objects.filter(
                 Q(owner=self.request.user) | Q(members=self.request.user)
             ),

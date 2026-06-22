@@ -1,7 +1,6 @@
 import os
 
 from django.db.models import Q
-from django.conf import settings
 
 from rest_framework import generics, serializers, status
 from rest_framework.permissions import (
@@ -41,7 +40,7 @@ class AttachmentListCreateView(
     def get_queryset(self):
         task_id = self.kwargs["task_id"]
 
-        return TaskAttachment.objects.filter(
+        return TaskAttachment.objects.select_related("uploaded_by").filter(
             task_id=task_id,
             task__in=_accessible_tasks(self.request.user),
         ).order_by("-uploaded_at")

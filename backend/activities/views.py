@@ -12,7 +12,9 @@ class ActivityListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Activity.objects.filter(
+        return Activity.objects.select_related(
+            "user", "project", "team"
+        ).filter(
             Q(project__owner=self.request.user)
             | Q(project__teams__members=self.request.user)
             | Q(team__owner=self.request.user)

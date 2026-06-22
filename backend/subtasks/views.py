@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
@@ -38,7 +39,10 @@ class SubtaskListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         task_id = self.kwargs["task_id"]
 
-        task = Task.objects.get(id=task_id)
+        task = get_object_or_404(
+            _accessible_tasks(self.request.user),
+            id=task_id,
+        )
 
         subtask = serializer.save(task=task)
 

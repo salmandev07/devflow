@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from users.urls import user_urlpatterns
+
 
 urlpatterns = [
     path(
@@ -32,7 +34,7 @@ urlpatterns = [
 
     path(
         "api/users/",
-        include("users.urls")
+        include(user_urlpatterns)
     ),
 
     path(

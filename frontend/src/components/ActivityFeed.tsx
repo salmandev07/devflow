@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getActivities } from "../services/activityService";
+import { useToast } from "../hooks/useToast";
 import { Activity, Clock } from "lucide-react";
 
 type ActivityItem = { id: number; message: string; created_at: string };
@@ -16,6 +17,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ActivityFeed() {
+  const { addToast } = useToast();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,6 +28,7 @@ export default function ActivityFeed() {
         setActivities(data);
       } catch (err) {
         console.error(err);
+        addToast("error", "Failed to load activity feed");
       } finally {
         setLoading(false);
       }
@@ -54,7 +57,7 @@ export default function ActivityFeed() {
         </div>
       ) : activities.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <Clock size={28} className="text-slate-700 mb-2" />
+          <Clock size={28} className="text-slate-400 dark:text-slate-500 mb-2" />
           <p className="text-sm text-slate-500 dark:text-slate-500">No activity yet</p>
         </div>
       ) : (
@@ -66,7 +69,7 @@ export default function ActivityFeed() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{item.message}</p>
-                <p className="text-xs text-slate-600 mt-0.5">{timeAgo(item.created_at)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">{timeAgo(item.created_at)}</p>
               </div>
             </div>
           ))}

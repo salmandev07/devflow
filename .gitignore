@@ -6,6 +6,11 @@ __pycache__/
 
 # Django
 db.sqlite3
+media/
+
+# Backend debug scripts
+backend/diagnose.py
+backend/test_api.py
 
 # Virtual Environment
 venv/

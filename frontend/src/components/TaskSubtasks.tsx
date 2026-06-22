@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ListChecks, Plus, Trash2, Check } from "lucide-react";
 import { getSubtasks, createSubtask, updateSubtask, deleteSubtask } from "../services/subtaskService";
+import { useToast } from "../hooks/useToast";
 import ConfirmDialog from "./ConfirmDialog";
 
 interface Subtask {
@@ -14,23 +15,26 @@ interface Props {
 }
 
 export default function TaskSubtasks({ taskId }: Props) {
+  const { addToast } = useToast();
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [title, setTitle] = useState("");
   const [adding, setAdding] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try { setSubtasks(await getSubtasks(taskId)); }
-      catch (err) { console.error(err); }
+      catch (err) { console.error(err); addToast("error", "Failed to load subtasks"); }
+      finally { setLoading(false); }
     };
     load();
   }, [taskId]);
 
   const loadSubtasks = async () => {
     try { setSubtasks(await getSubtasks(taskId)); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to load subtasks"); }
   };
 
   const handleCreate = async () => {
@@ -40,13 +44,13 @@ export default function TaskSubtasks({ taskId }: Props) {
       await createSubtask(taskId, title);
       setTitle("");
       await loadSubtasks();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to create subtask"); }
     finally { setAdding(false); }
   };
 
   const handleToggle = async (id: number, completed: boolean) => {
     try { await updateSubtask(id, { completed: !completed }); await loadSubtasks(); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to update subtask"); }
   };
 
   const handleDeleteConfirm = async () => {
@@ -55,7 +59,7 @@ export default function TaskSubtasks({ taskId }: Props) {
     try {
       await deleteSubtask(confirmDeleteId);
       setSubtasks((prev) => prev.filter((s) => s.id !== confirmDeleteId));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to delete subtask"); }
     finally { setDeleting(false); setConfirmDeleteId(null); }
   };
 
@@ -115,10 +119,19 @@ export default function TaskSubtasks({ taskId }: Props) {
       </div>
 
       {/* Subtask list */}
-      {subtasks.length === 0 ? (
+      {loading ? (
+        <div className="space-y-1.5">
+          {[1,2,3].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 px-4 py-3">
+              <div className="skeleton h-5 w-5 rounded-md shrink-0" />
+              <div className="skeleton h-3 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : subtasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          <ListChecks size={28} className="text-slate-700 mb-2" />
-          <p className="text-sm text-slate-600">No subtasks yet</p>
+          <ListChecks size={28} className="text-slate-400 dark:text-slate-500 mb-2" />
+          <p className="text-sm text-slate-500 dark:text-slate-500">No subtasks yet</p>
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -142,7 +155,7 @@ export default function TaskSubtasks({ taskId }: Props) {
               </button>
 
               {/* Title */}
-              <span className={`flex-1 text-sm transition-all ${s.completed ? "text-slate-600 line-through" : "text-slate-800 dark:text-slate-200"}`}>
+              <span className={`flex-1 text-sm transition-all ${s.completed ? "text-slate-500 dark:text-slate-400 line-through" : "text-slate-800 dark:text-slate-200"}`}>
                 {s.title}
               </span>
 
@@ -150,7 +163,7 @@ export default function TaskSubtasks({ taskId }: Props) {
               <button
                 onClick={() => setConfirmDeleteId(s.id)}
                 disabled={deleting && confirmDeleteId === s.id}
-                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-600 hover:text-rose-400 transition-all disabled:opacity-50"
+                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-500 dark:text-slate-500 hover:text-rose-400 transition-all disabled:opacity-50"
               >
                 {deleting && confirmDeleteId === s.id ? (
                   <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-400 border-t-transparent" />

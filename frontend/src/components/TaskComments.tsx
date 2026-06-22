@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, Send, Trash2 } from "lucide-react";
 import { getComments, createComment, deleteComment } from "../services/commentService";
+import { useToast } from "../hooks/useToast";
 import Avatar from "./Avatar";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -24,23 +25,26 @@ function formatTime(iso: string) {
 }
 
 export default function TaskComments({ taskId }: Props) {
+  const { addToast } = useToast();
   const [comments, setComments] = useState<Comment[]>([]);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try { setComments(await getComments(taskId)); }
-      catch (err) { console.error(err); }
+      catch (err) { console.error(err); addToast("error", "Failed to load comments"); }
+      finally { setLoading(false); }
     };
     load();
   }, [taskId]);
 
   const loadComments = async () => {
     try { setComments(await getComments(taskId)); }
-    catch (err) { console.error(err); }
+    catch (err) { console.error(err); addToast("error", "Failed to load comments"); }
   };
 
   const handleAdd = async () => {
@@ -50,7 +54,7 @@ export default function TaskComments({ taskId }: Props) {
       await createComment(taskId, content);
       setContent("");
       await loadComments();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to add comment"); }
     finally { setSubmitting(false); }
   };
 
@@ -60,7 +64,7 @@ export default function TaskComments({ taskId }: Props) {
     try {
       await deleteComment(confirmDeleteId);
       setComments((prev) => prev.filter((c) => c.id !== confirmDeleteId));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); addToast("error", "Failed to delete comment"); }
     finally { setDeleting(false); setConfirmDeleteId(null); }
   };
 
@@ -97,10 +101,25 @@ export default function TaskComments({ taskId }: Props) {
       </div>
 
       {/* Comments list */}
-      {comments.length === 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {[1,2,3].map((i) => (
+            <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="skeleton h-8 w-8 rounded-full" />
+                <div className="space-y-1.5">
+                  <div className="skeleton h-3 w-24" />
+                  <div className="skeleton h-2 w-16" />
+                </div>
+              </div>
+              <div className="skeleton h-3 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : comments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          <MessageSquare size={28} className="text-slate-700 mb-2" />
-          <p className="text-sm text-slate-600">No comments yet</p>
+          <MessageSquare size={28} className="text-slate-400 dark:text-slate-500 mb-2" />
+          <p className="text-sm text-slate-500 dark:text-slate-500">No comments yet</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -114,13 +133,13 @@ export default function TaskComments({ taskId }: Props) {
                   <Avatar name={c.username} size="sm" />
                   <div>
                     <span className="text-sm font-medium text-indigo-400">{c.username}</span>
-                    <span className="ml-2 text-xs text-slate-600">{formatTime(c.created_at)}</span>
+                    <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">{formatTime(c.created_at)}</span>
                   </div>
                 </div>
                 <button
                   onClick={() => setConfirmDeleteId(c.id)}
                   disabled={deleting && confirmDeleteId === c.id}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-600 hover:text-rose-400 transition-all disabled:opacity-50"
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-500 dark:text-slate-500 hover:text-rose-400 transition-all disabled:opacity-50"
                 >
                   {deleting && confirmDeleteId === c.id ? (
                     <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-400 border-t-transparent" />

@@ -10,7 +10,6 @@ from rest_framework.response import Response
 
 from .serializers import TaskSerializer
 from activities.models import Activity
-from projects.models import Project
 
 from .models import Task, TimeSession
 from .time_session_serializers import TimeSessionSerializer
@@ -21,7 +20,9 @@ class TaskListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(
+        return Task.objects.select_related(
+            "project", "team", "assigned_to"
+        ).filter(
             Q(project__owner=self.request.user)
             | Q(project__teams__members=self.request.user)
         ).distinct().order_by("-created_at")
@@ -43,7 +44,9 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(
+        return Task.objects.select_related(
+            "project", "team", "assigned_to"
+        ).filter(
             Q(project__owner=self.request.user)
             | Q(project__teams__members=self.request.user)
         ).distinct().order_by("-created_at")
@@ -176,7 +179,7 @@ class TimeSessionListView(generics.ListAPIView):
 
     def get_queryset(self):
         return (
-            TimeSession.objects.filter(
+            TimeSession.objects.select_related("user").filter(
                 task_id=self.kwargs["task_id"],
                 task__in=Task.objects.filter(
                     Q(project__owner=self.request.user)

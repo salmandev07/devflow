@@ -5,7 +5,6 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Project, ProjectTeam
 from .serializers import ProjectSerializer
@@ -15,10 +14,9 @@ from teams.models import Team
 class ProjectListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def get_queryset(self):
-        return Project.objects.filter(
+        return Project.objects.prefetch_related("teams").filter(
             Q(owner=self.request.user)
             | Q(teams__members=self.request.user)
         ).distinct().order_by("-created_at")
@@ -34,10 +32,9 @@ class ProjectListCreateView(generics.ListCreateAPIView):
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def get_queryset(self):
-        return Project.objects.filter(
+        return Project.objects.prefetch_related("teams").filter(
             Q(owner=self.request.user)
             | Q(teams__members=self.request.user)
         ).distinct().order_by("-created_at")
@@ -45,7 +42,6 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class ProjectAssignTeamView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request, project_id):
         project = get_object_or_404(
@@ -70,7 +66,6 @@ class ProjectAssignTeamView(APIView):
 
 class ProjectUnassignTeamView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request, project_id):
         project = get_object_or_404(

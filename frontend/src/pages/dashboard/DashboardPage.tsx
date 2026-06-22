@@ -10,6 +10,7 @@ import { getProjects } from "../../services/projectService";
 import { getTasks } from "../../services/taskService";
 import { getAllSubtasks } from "../../services/subtaskService";
 import { useTeams } from "../../hooks/useTeams";
+import { useToast } from "../../hooks/useToast";
 import {
   FolderKanban, Users, CheckSquare, CheckCircle2,
   Clock, ListTodo, TrendingUp, AlertTriangle,
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const { teamCount, loading: teamsLoading } = useTeams();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const username = getUsernameFromToken();
 
@@ -70,7 +72,7 @@ export default function DashboardPage() {
         setProjectCount(projects.length);
         setTasks(taskData);
         setSubtasks(allSubtasks);
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err); addToast("error", "Failed to load dashboard data"); }
       finally { setLoading(false); }
     };
     void load();

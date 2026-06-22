@@ -8,6 +8,7 @@ import {
 
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { getTasks, updateTask } from "../../services/taskService";
+import { useToast } from "../../hooks/useToast";
 import { PriorityBadge } from "../../components/Badge";
 import Avatar from "../../components/Avatar";
 import { SkeletonKanbanBoard } from "../../components/SkeletonLoader";
@@ -61,6 +62,7 @@ function formatDate(date: string) {
 }
 
 export default function KanbanPage() {
+  const { addToast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,6 +73,7 @@ export default function KanbanPage() {
         setTasks(data);
       } catch (error) {
         console.error(error);
+        addToast("error", "Failed to load tasks");
       } finally {
         setLoading(false);
       }
@@ -83,6 +86,7 @@ export default function KanbanPage() {
       setTasks(await getTasks());
     } catch (error) {
       console.error(error);
+      addToast("error", "Failed to load tasks");
     }
   };
 
@@ -108,6 +112,7 @@ export default function KanbanPage() {
       await updateTask(taskId, { status: newStatus });
     } catch (error) {
       console.error(error);
+      addToast("error", "Failed to update task status");
       await fetchTasks();
     }
   };

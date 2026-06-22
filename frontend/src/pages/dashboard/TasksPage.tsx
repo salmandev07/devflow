@@ -224,7 +224,7 @@ export default function TasksPage() {
                 <option value="">{placeholder}</option>
                 {opts.map(({ v, l }) => <option key={v} value={v}>{l}</option>)}
               </select>
-              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 pointer-events-none" />
             </div>
           ))}
           {activeFilters > 0 && (
@@ -282,7 +282,7 @@ export default function TasksPage() {
                           <Avatar name={task.assigned_username} size="xs" />
                           <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{task.assigned_username}</span>
                         </>
-                      ) : <span className="text-xs text-slate-600">Unassigned</span>}
+                      ) : <span className="text-xs text-slate-600 dark:text-slate-400">Unassigned</span>}
                     </div>
                     {/* Due date */}
                     <span className={`hidden md:block text-xs font-medium ${overdue ? "text-rose-400" : "text-slate-500 dark:text-slate-500"}`}>
