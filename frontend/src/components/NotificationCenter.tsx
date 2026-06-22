@@ -25,6 +25,7 @@ export default function NotificationCenter() {
       finally { setLoading(false); }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadNotifications = async () => {

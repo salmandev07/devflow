@@ -34,6 +34,7 @@ export default function ActivityFeed() {
       }
     };
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -42,6 +42,7 @@ export default function ReportsPage() {
       catch (err) { console.error(err); addToast("error", "Failed to load projects"); }
     };
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadReport = async () => {

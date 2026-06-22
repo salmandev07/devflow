@@ -78,6 +78,7 @@ function TeamWorkspacePage() {
       };
       
     void loadTeam();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
 

@@ -30,6 +30,7 @@ export default function TaskSubtasks({ taskId }: Props) {
       finally { setLoading(false); }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const loadSubtasks = async () => {

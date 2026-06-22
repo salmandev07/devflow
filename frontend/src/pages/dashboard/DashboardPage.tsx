@@ -76,6 +76,7 @@ export default function DashboardPage() {
       finally { setLoading(false); }
     };
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Derived metrics

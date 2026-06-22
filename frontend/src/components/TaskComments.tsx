@@ -40,6 +40,7 @@ export default function TaskComments({ taskId }: Props) {
       finally { setLoading(false); }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const loadComments = async () => {

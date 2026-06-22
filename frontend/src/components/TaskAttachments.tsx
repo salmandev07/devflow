@@ -41,6 +41,7 @@ export default function TaskAttachments({ taskId }: Props) {
       finally { setLoading(false); }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const loadAttachments = async () => {
