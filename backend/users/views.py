@@ -54,6 +54,7 @@ class LoginView(APIView):
         return Response({
             "access": str(refresh.access_token),
             "refresh": str(refresh),
+            "is_superuser": user.is_superuser,
         })
 
 

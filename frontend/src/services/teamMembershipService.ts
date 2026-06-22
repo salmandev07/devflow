@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/teams/`;
 
@@ -9,15 +10,17 @@ const getAuthHeader = () => ({
   },
 });
 
+type TeamMembershipData = { id: number; user: number; username: string; role: string };
+
 export const getTeamMembers = async (
   teamId: number
-) => {
+): Promise<TeamMembershipData[]> => {
   const response = await axios.get(
     `${API_URL}${teamId}/members/`,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<TeamMembershipData>(response.data);
 };
 
 export const addTeamMember = async (

@@ -16,6 +16,10 @@ function getUsername(): string {
   return localStorage.getItem("username") || "User";
 }
 
+function getRole(): string {
+  return localStorage.getItem("is_superuser") === "true" ? "Admin" : "Member";
+}
+
 const navItems = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/projects",  label: "Projects",  Icon: FolderKanban },
@@ -30,6 +34,7 @@ export default function Sidebar({
   collapsed, onToggleCollapse, mobileOpen, onMobileClose,
 }: SidebarProps) {
   const username = getUsername();
+  const role = getRole();
 
   const handleLogout = () => {
     localStorage.clear();
@@ -51,6 +56,7 @@ export default function Sidebar({
         <SidebarContent
           collapsed={collapsed}
           username={username}
+          role={role}
           onToggleCollapse={onToggleCollapse}
           onLogout={handleLogout}
         />
@@ -70,6 +76,7 @@ export default function Sidebar({
         <SidebarContent
           collapsed={false}
           username={username}
+          role={role}
           onToggleCollapse={onMobileClose}
           onLogout={handleLogout}
           isMobile
@@ -80,10 +87,11 @@ export default function Sidebar({
 }
 
 function SidebarContent({
-  collapsed, username, onToggleCollapse, onLogout, isMobile = false,
+  collapsed, username, role, onToggleCollapse, onLogout, isMobile = false,
 }: {
   collapsed: boolean;
   username: string;
+  role: string;
   onToggleCollapse: () => void;
   onLogout: () => void;
   isMobile?: boolean;
@@ -153,7 +161,7 @@ function SidebarContent({
             <Avatar name={username} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{username}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-500 truncate">Member</p>
+              <p className="text-xs text-slate-500 dark:text-slate-500 truncate">{role}</p>
             </div>
             <button
               onClick={onLogout}

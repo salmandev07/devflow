@@ -21,6 +21,7 @@ export default function LoginPage() {
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
       localStorage.setItem("username", username);
+      localStorage.setItem("is_superuser", String(data.is_superuser));
       window.location.href = "/dashboard";
     } catch {
       setError("Invalid username or password. Please try again.");

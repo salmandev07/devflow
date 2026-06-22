@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/projects/`;
 
@@ -14,13 +15,15 @@ const getAuthHeader = () => {
   };
 };
 
-export const getProjects = async () => {
+export type ProjectData = { id: number; name: string; description: string; created_at: string };
+
+export const getProjects = async (): Promise<ProjectData[]> => {
   const response = await axios.get(
     API_URL,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<ProjectData>(response.data);
 };
 
 export const createProject = async (

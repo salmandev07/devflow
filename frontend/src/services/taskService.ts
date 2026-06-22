@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/tasks/`;
 
@@ -9,13 +10,20 @@ const getAuthHeader = () => ({
   },
 });
 
-export const getTasks = async () => {
+export type TaskData = {
+  id: number; title: string; description: string; status: string; priority: string;
+  project: number; project_name?: string; team: number; team_name?: string;
+  assigned_to: number | null; assigned_to_username?: string;
+  estimated_hours: number; actual_hours: number; due_date: string | null;
+};
+
+export const getTasks = async (): Promise<TaskData[]> => {
   const response = await axios.get(
     API_URL,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<TaskData>(response.data);
 };
 
 export const createTask = async (
@@ -110,15 +118,17 @@ export const getTimerStatus = async (
   return response.data;
 };
 
+type TimeSessionData = { id: number; username: string; started_at: string; ended_at: string | null; duration_hours: string };
+
 export const getTaskSessions =
   async (
     taskId: number
-  ) => {
+  ): Promise<TimeSessionData[]> => {
     const response =
       await axios.get(
         `${API_URL}${taskId}/sessions/`,
         getAuthHeader()
       );
 
-    return response.data;
+    return normalizeList<TimeSessionData>(response.data);
   };

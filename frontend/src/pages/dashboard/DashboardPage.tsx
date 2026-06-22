@@ -19,7 +19,7 @@ import {
 
 type Task = {
   id: number; title: string; status: string; priority: string;
-  estimated_hours: string; actual_hours: string;
+  estimated_hours: number; actual_hours: number;
   assigned_to_username?: string; due_date?: string | null;
 };
 type Subtask = { id: number; completed: boolean };

@@ -1,30 +1,34 @@
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/subtasks/`;
+
 const getAuthHeader = () => ({
   headers: {
     Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
   },
 });
 
-export const getSubtasks = async (taskId: number) => {
+type SubtaskData = { id: number; title: string; completed: boolean };
+
+export const getSubtasks = async (taskId: number): Promise<SubtaskData[]> => {
   const response = await axios.get(
     `${API_URL}tasks/${taskId}/subtasks/`,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<SubtaskData>(response.data);
 };
 
-export const getAllSubtasks = async () => {
+export const getAllSubtasks = async (): Promise<SubtaskData[]> => {
   const response = await axios.get(
     API_URL,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<SubtaskData>(response.data);
 };
 
 export const createSubtask = async (

@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/comments/`;
 
@@ -12,15 +13,17 @@ const getAuthHeader = () => ({
   },
 });
 
+type CommentData = { id: number; username: string; content: string; created_at: string };
+
 export const getComments = async (
   taskId: number
-) => {
+): Promise<CommentData[]> => {
   const response = await axios.get(
     `${API_URL}tasks/${taskId}/comments/`,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<CommentData>(response.data);
 };
 
 export const createComment = async (

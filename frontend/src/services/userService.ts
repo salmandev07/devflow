@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/users/list/`;
 
@@ -9,12 +10,14 @@ const getAuthHeader = () => ({
   },
 });
 
-export const getUsers = async () => {
+type UserData = { id: number; username: string };
+
+export const getUsers = async (): Promise<UserData[]> => {
   const response = await axios.get(API_URL, getAuthHeader());
-  return response.data;
+  return normalizeList<UserData>(response.data);
 };
 
-export const getAvailableUsers = async (excludeTeamId?: number) => {
+export const getAvailableUsers = async (excludeTeamId?: number): Promise<UserData[]> => {
   const params: Record<string, string> = {};
   if (excludeTeamId) {
     params.exclude_team = String(excludeTeamId);
@@ -23,5 +26,5 @@ export const getAvailableUsers = async (excludeTeamId?: number) => {
     ...getAuthHeader(),
     params,
   });
-  return response.data;
+  return normalizeList<UserData>(response.data);
 };

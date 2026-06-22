@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
+import { normalizeList } from "../utils/pagination";
 
 const API_URL = `${API_BASE_URL}/attachments/`;
 
@@ -12,15 +13,17 @@ const getAuthHeader = () => ({
   },
 });
 
+type AttachmentData = { id: number; file: string; uploaded_by_username: string };
+
 export const getAttachments = async (
   taskId: number
-) => {
+): Promise<AttachmentData[]> => {
   const response = await axios.get(
     `${API_URL}tasks/${taskId}/attachments/`,
     getAuthHeader()
   );
 
-  return response.data;
+  return normalizeList<AttachmentData>(response.data);
 };
 
 export const uploadAttachment = async (
