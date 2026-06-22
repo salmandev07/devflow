@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Zap, User, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
+import { Zap, User, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Sun, Moon } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import { registerUser } from "../../services/authService";
+import { useTheme } from "../../context/ThemeContext";
 
 function getPasswordStrength(pwd: string): { level: number; label: string; color: string } {
   let score = 0;
@@ -26,6 +27,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const strength = getPasswordStrength(password);
 
@@ -93,7 +95,16 @@ export default function RegisterPage() {
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 bg-white dark:bg-slate-950">
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 bg-white dark:bg-slate-950 relative">
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+          title="Toggle theme"
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
         <div className="flex items-center gap-2.5 mb-8 lg:hidden">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
             <Zap size={16} className="text-white" />
