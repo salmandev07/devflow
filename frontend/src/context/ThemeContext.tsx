@@ -18,11 +18,8 @@ function getInitialTheme(): Theme {
       document.documentElement.classList.add(stored);
       return stored;
     }
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.classList.add(prefersDark ? "dark" : "light");
-    return prefersDark ? "dark" : "light";
   }
-  return "light";
+  return "dark";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
