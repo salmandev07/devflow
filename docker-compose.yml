@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: devflow-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: devflow_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - devflow-postgres-data:/var/lib/postgresql/data
+
+    networks:
+      - devflow-network
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: devflow-backend
+
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - postgres
+
+    networks:
+      - devflow-network
+
+volumes:
+  devflow-postgres-data:
+
+networks:
+  devflow-network:
