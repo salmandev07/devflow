@@ -160,7 +160,22 @@ export default function TasksPage() {
       setTasks(await getTasks());
       setModalOpen(false); resetForm();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to save task";
+      let msg = "Failed to save task";
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosErr = err as { response?: { data?: Record<string, unknown> } };
+        const data = axiosErr.response?.data;
+        if (data) {
+          const messages: string[] = [];
+          for (const [field, value] of Object.entries(data)) {
+            if (Array.isArray(value)) {
+              messages.push(`${field}: ${value.join(", ")}`);
+            } else if (typeof value === "string") {
+              messages.push(value);
+            }
+          }
+          if (messages.length > 0) msg = messages.join("; ");
+        }
+      }
       setFormError(msg);
       addToast("error", msg);
     }
