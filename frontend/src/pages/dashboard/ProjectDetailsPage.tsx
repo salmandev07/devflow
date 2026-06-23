@@ -182,7 +182,6 @@ export default function ProjectDetailsPage() {
   const handleCreateTask = async () => {
     const titleError = validateTaskTitle(taskTitle);
     if (titleError) { addToast("error", titleError); return; }
-    if (!taskTeam) { addToast("error", "Please select a team"); return; }
     setCreatingTask(true);
     try {
       await createTask({
@@ -190,7 +189,7 @@ export default function ProjectDetailsPage() {
         description: taskDesc,
         priority: taskPriority,
         project: Number(id),
-        team: Number(taskTeam),
+        team: taskTeam ? Number(taskTeam) : null,
         assigned_to: taskAssignee,
         due_date: null,
         estimated_hours: 0,
@@ -544,7 +543,7 @@ export default function ProjectDetailsPage() {
               <select value={taskTeam} onChange={(e) => setTaskTeam(e.target.value)}
                 className="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-slate-100 text-sm px-3 py-2.5 outline-none transition-all"
               >
-                <option value="">Select Team</option>
+                <option value="">No Team (Optional)</option>
                 {projectTeams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>

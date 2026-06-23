@@ -12,7 +12,7 @@ const getAuthHeader = () => ({
 
 export type TaskData = {
   id: number; title: string; description: string; status: string; priority: string;
-  project: number; project_name?: string; team: number; team_name?: string;
+  project: number; project_name?: string; team: number | null; team_name?: string;
   assigned_to: number | null; assigned_to_username?: string; created_by: number | null;
   estimated_hours: number; due_date: string | null;
 };
@@ -31,7 +31,7 @@ export const createTask = async (
     title: string;
     description: string;
     project: number;
-    team: number;
+    team: number | null;
     priority: string;
     due_date: string | null;
     assigned_to: number | null;
