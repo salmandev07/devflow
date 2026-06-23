@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { API_BASE_URL } from "../config/api";
 
 export type UserProfile = {
@@ -35,11 +36,14 @@ function isAuthenticated(): boolean {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
 
   const fetchProfile = useCallback(async () => {
     if (!isAuthenticated()) {
-      setProfile(null);
-      setLoading(false);
+      if (mountedRef.current) {
+        setProfile(null);
+        setLoading(false);
+      }
       return;
     }
     try {
@@ -48,22 +52,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (!res.ok) throw new Error("Failed to load profile");
       const data = await res.json();
+      if (!mountedRef.current) return;
       setProfile(data);
-      // Cache display name for components that read localStorage
       localStorage.setItem("full_name", data.full_name || data.username);
       localStorage.setItem("position", data.position || "");
       if (data.avatar) localStorage.setItem("avatar", data.avatar);
       else localStorage.removeItem("avatar");
     } catch {
-      setProfile(null);
+      if (mountedRef.current) setProfile(null);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void fetchProfile();
-  }, [fetchProfile]);
+    mountedRef.current = true;
+    if (!isAuthenticated()) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/profile/`, {
+          headers: getAuthHeader(),
+        });
+        if (!res.ok) throw new Error("Failed to load profile");
+        const data = await res.json();
+        if (!mountedRef.current) return;
+        setProfile(data);
+        localStorage.setItem("full_name", data.full_name || data.username);
+        localStorage.setItem("position", data.position || "");
+        if (data.avatar) localStorage.setItem("avatar", data.avatar);
+        else localStorage.removeItem("avatar");
+      } catch {
+        if (mountedRef.current) setProfile(null);
+      } finally {
+        if (mountedRef.current) setLoading(false);
+      }
+    })();
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const refreshProfile = useCallback(async () => {
     await fetchProfile();
