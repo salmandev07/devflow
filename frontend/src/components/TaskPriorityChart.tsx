@@ -25,7 +25,7 @@ export default function TaskPriorityChart({ low, medium, high }: Props) {
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} barSize={48} margin={{ top: 8, right: 0, left: -20, bottom: 0 }}>
             <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis allowDecimals={false} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis allowDecimals={false} domain={[0, (dataMax: number) => Math.max(dataMax, 1)]} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "8px", color: "#f1f5f9", fontSize: "12px" }}
               cursor={{ fill: "rgba(255,255,255,0.03)", radius: 6 }}

@@ -25,11 +25,7 @@ type Task = {
 type Subtask = { id: number; completed: boolean };
 
 function getUsernameFromToken(): string {
-  try {
-    const t = localStorage.getItem("accessToken");
-    if (!t) return "there";
-    return JSON.parse(atob(t.split(".")[1])).username || "there";
-  } catch { return "there"; }
+  return localStorage.getItem("username") || "there";
 }
 
 function StatCard({
