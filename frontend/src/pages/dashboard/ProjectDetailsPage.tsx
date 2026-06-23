@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, FolderKanban, Users, ListTodo, Clock, CheckCircle2, AlertCircle, ExternalLink, Plus, X, Crown } from "lucide-react";
@@ -50,6 +51,8 @@ export default function ProjectDetailsPage() {
   const [taskPriority, setTaskPriority] = useState("medium");
   const [taskTeam, setTaskTeam] = useState("");
   const [taskAssignee, setTaskAssignee] = useState<number | null>(null);
+  const [taskDueDate, setTaskDueDate] = useState("");
+  const [taskEstimatedHours, setTaskEstimatedHours] = useState("");
   const [creatingTask, setCreatingTask] = useState(false);
   const [addMemberTeam, setAddMemberTeam] = useState<number | null>(null);
   const [addMemberUser, setAddMemberUser] = useState("");
@@ -86,6 +89,20 @@ export default function ProjectDetailsPage() {
     load();
     return () => { cancelled = true; };
   }, [id]);
+
+  useEffect(() => {
+    if (!taskTeam) {
+      setMembershipsByTeam(prev => ({ ...prev, [taskTeam]: [] }));
+      return;
+    }
+    const load = async () => {
+      try {
+        const members = await getTeamMembers(Number(taskTeam));
+        setMembershipsByTeam(prev => ({ ...prev, [Number(taskTeam)]: members }));
+      } catch { setMembershipsByTeam(prev => ({ ...prev, [Number(taskTeam)]: [] })); }
+    };
+    load();
+  }, [taskTeam, id]);
 
   const refreshTeams = async () => {
     const pTeams = await getProjectTeams(Number(id)).catch(() => []);
@@ -182,6 +199,7 @@ export default function ProjectDetailsPage() {
   const handleCreateTask = async () => {
     const titleError = validateTaskTitle(taskTitle);
     if (titleError) { addToast("error", titleError); return; }
+    if (!taskTeam) { addToast("error", "Please select a team"); return; }
     setCreatingTask(true);
     try {
       await createTask({
@@ -189,12 +207,12 @@ export default function ProjectDetailsPage() {
         description: taskDesc,
         priority: taskPriority,
         project: Number(id),
-        team: taskTeam ? Number(taskTeam) : null,
+        team: Number(taskTeam),
         assigned_to: taskAssignee,
-        due_date: null,
-        estimated_hours: 0,
+        due_date: taskDueDate || null,
+        estimated_hours: Number(taskEstimatedHours) || 0,
       });
-      setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskTeam(""); setTaskAssignee(null);
+      setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskTeam(""); setTaskAssignee(null); setTaskDueDate(""); setTaskEstimatedHours("");
       setCreateTaskOpen(false);
       addToast("success", "Task created successfully");
       const allTasks = await getTasks();
@@ -518,7 +536,7 @@ export default function ProjectDetailsPage() {
       </Modal>
 
       {/* Create Task Modal */}
-      <Modal open={createTaskOpen} onClose={() => { setCreateTaskOpen(false); setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskTeam(""); setTaskAssignee(null); }} title="New Task" size="lg">
+      <Modal open={createTaskOpen} onClose={() => { setCreateTaskOpen(false); setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskTeam(""); setTaskAssignee(null); setTaskDueDate(""); setTaskEstimatedHours(""); }} title="New Task" size="lg">
         <div className="space-y-4">
           <Input label="Task Title" placeholder="e.g. Implement authentication flow" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} required />
           <div className="flex flex-col gap-1.5">
@@ -539,16 +557,38 @@ export default function ProjectDetailsPage() {
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Project</label>
+              <select value={String(id)} disabled
+                className="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm px-3 py-2.5 outline-none"
+              >
+                <option value={String(id)}>{project?.name ?? "Loading…"}</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Team</label>
               <select value={taskTeam} onChange={(e) => setTaskTeam(e.target.value)}
                 className="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-slate-100 text-sm px-3 py-2.5 outline-none transition-all"
               >
-                <option value="">No Team (Optional)</option>
+                <option value="">Select Team</option>
                 {projectTeams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Assignee</label>
+              <select value={taskAssignee != null ? String(taskAssignee) : ""} onChange={(v) => setTaskAssignee(v ? Number(v) : null)}
+                className="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 dark:text-slate-100 text-sm px-3 py-2.5 outline-none transition-all"
+              >
+                <option value="">Unassigned</option>
+                {taskTeam && membershipsByTeam[Number(taskTeam)] ? membershipsByTeam[Number(taskTeam)].map((m) => <option key={m.id} value={m.user}>{m.username}</option>) : []}
+              </select>
+            </div>
           </div>
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Due Date" type="date" value={taskDueDate} onChange={(e) => setTaskDueDate(e.target.value)} />
+            <Input label="Est. Hours" type="number" placeholder="0" value={taskEstimatedHours}
+              onChange={(e) => setTaskEstimatedHours(e.target.value)} />
+          </div>
+          <div className="flex justify-end gap- gap-2 pt-1">
             <Button variant="ghost" onClick={() => setCreateTaskOpen(false)}>Cancel</Button>
             <Button variant="primary" loading={creatingTask} onClick={handleCreateTask} icon={<Plus size={14} />}>Create Task</Button>
           </div>
