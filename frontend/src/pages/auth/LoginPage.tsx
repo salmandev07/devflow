@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Zap, Mail, Lock, Eye, EyeOff, CheckCircle2, ArrowRight, Sun, Moon } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,10 +23,20 @@ export default function LoginPage() {
       const data = await loginUser({ username, password });
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
-      localStorage.setItem("username", username);
+      localStorage.setItem("username", data.username || username);
       localStorage.setItem("is_superuser", String(data.is_superuser));
       window.location.href = "/dashboard";
-    } catch {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { requires_verification?: boolean; username?: string; error?: string } } };
+      if (axiosErr.response?.data?.requires_verification) {
+        navigate("/verify-email", {
+          state: {
+            username: axiosErr.response.data.username || username,
+            email: "",
+          },
+        });
+        return;
+      }
       setError("Invalid username or password. Please try again.");
     } finally {
       setLoading(false);
@@ -163,7 +174,13 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-500">
+          <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-500">
+            <Link to="/forgot-password" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              Forgot password?
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-500">
             Don't have an account?{" "}
             <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Create one

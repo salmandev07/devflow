@@ -3,16 +3,14 @@ import os
 from django.db.models import Q
 
 from rest_framework import generics, serializers, status
-from rest_framework.permissions import (
-    IsAuthenticated,
-)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 from tasks.models import Task
 from .models import TaskAttachment
-from .serializers import (
-    TaskAttachmentSerializer,
-)
+from .serializers import TaskAttachmentSerializer
+from notifications.helpers import create_notification
 
 ALLOWED_UPLOAD_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp",
@@ -31,15 +29,12 @@ def _accessible_tasks(user):
     ).distinct()
 
 
-class AttachmentListCreateView(
-    generics.ListCreateAPIView
-):
+class AttachmentListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskAttachmentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         task_id = self.kwargs["task_id"]
-
         return TaskAttachment.objects.select_related("uploaded_by").filter(
             task_id=task_id,
             task__in=_accessible_tasks(self.request.user),
@@ -57,12 +52,19 @@ class AttachmentListCreateView(
                 raise serializers.ValidationError(
                     {"file": "File size must be under 10 MB."}
                 )
-        serializer.save(uploaded_by=self.request.user)
+        attachment = serializer.save(uploaded_by=self.request.user)
+        task = attachment.task
+        if task.assigned_to and task.assigned_to != self.request.user:
+            create_notification(
+                actor=self.request.user,
+                user=task.assigned_to,
+                notification_type="attachment_added",
+                message=f"{self.request.user.username} uploaded \"{attachment.filename}\" to \"{task.title}\"",
+                url=f"/tasks/{task.id}",
+            )
 
 
-class AttachmentDeleteView(
-    generics.DestroyAPIView
-):
+class AttachmentDeleteView(generics.DestroyAPIView):
     serializer_class = TaskAttachmentSerializer
     permission_classes = [IsAuthenticated]
 
@@ -70,3 +72,8 @@ class AttachmentDeleteView(
         return TaskAttachment.objects.filter(
             task__in=_accessible_tasks(self.request.user)
         )
+
+    def perform_destroy(self, instance):
+        if instance.uploaded_by != self.request.user:
+            raise PermissionDenied("You can only delete your own attachments.")
+        instance.delete()

@@ -12,7 +12,7 @@ import { SkeletonReportResult } from "../../components/SkeletonLoader";
 type Project = { id: number; name: string };
 type Report = {
   project: string; total_tasks: number; completed: number;
-  progress: number; todo: number; estimated_hours: number; actual_hours: number;
+  progress: number; todo: number; estimated_hours: number;
 };
 
 function MetricCard({ label, value, icon: Icon, color }: { label: string; value: string | number; icon: React.ElementType; color: string }) {
@@ -61,8 +61,7 @@ export default function ReportsPage() {
     const rows = [
       ["Project", report.project], ["Tasks", report.total_tasks],
       ["Completed", report.completed], ["In Progress", report.progress],
-      ["Todo", report.todo], ["Estimated Hours", report.estimated_hours],
-      ["Actual Hours", report.actual_hours],
+      ["Todo", report.todo],       ["Estimated Hours", report.estimated_hours],
     ];
     const csvContent = rows.map((r) => r.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -85,7 +84,6 @@ export default function ReportsPage() {
     pdf.text(`In Progress: ${report.progress}`, 20, 85);
     pdf.text(`Todo: ${report.todo}`, 20, 100);
     pdf.text(`Estimated Hours: ${report.estimated_hours}`, 20, 115);
-    pdf.text(`Actual Hours: ${report.actual_hours}`, 20, 130);
     pdf.save(`${report.project}-report.pdf`);
   };
 
@@ -150,7 +148,6 @@ export default function ReportsPage() {
               <MetricCard label="In Progress" value={report.progress} icon={Clock} color="bg-amber-600" />
               <MetricCard label="To Do" value={report.todo} icon={ListTodo} color="bg-slate-300 dark:bg-slate-600" />
               <MetricCard label="Est. Hours" value={`${report.estimated_hours}h`} icon={Timer} color="bg-blue-600" />
-              <MetricCard label="Actual Hours" value={`${report.actual_hours}h`} icon={Timer} color="bg-violet-600" />
             </div>
           </>
         )}

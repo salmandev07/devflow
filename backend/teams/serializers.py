@@ -3,6 +3,10 @@ from .models import Team
 
 
 class TeamSerializer(serializers.ModelSerializer):
+    project_name = serializers.CharField(
+        source="project.name", read_only=True, default=None
+    )
+
     class Meta:
         model = Team
         fields = "__all__"

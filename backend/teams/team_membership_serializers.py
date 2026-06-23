@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import TeamMembership
+from .models import Team, TeamMembership
 
 
 class TeamMembershipSerializer(serializers.ModelSerializer):
@@ -11,6 +11,7 @@ class TeamMembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamMembership
         fields = ["id", "team", "user", "username", "role"]
+        extra_kwargs = {"team": {"read_only": True}}
 
     def validate_user(self, value):
         if value.is_superuser:
@@ -24,19 +25,23 @@ class TeamMembershipSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        team = data.get("team") or (
-            self.instance.team if self.instance else None
-        )
-        user = data.get("user") or (
-            self.instance.user if self.instance else None
-        )
-
-        if team and user:
+        user = data.get("user")
+        team_id = self.context["view"].kwargs.get("team_id")
+        if user and team_id:
+            try:
+                team = Team.objects.get(id=team_id)
+            except Team.DoesNotExist:
+                raise serializers.ValidationError(
+                    {"team": "Team not found"}
+                )
+            if user == team.owner:
+                raise serializers.ValidationError(
+                    {"user": "The team owner is already a member"}
+                )
             if TeamMembership.objects.filter(
-                team=team, user=user
+                team_id=team_id, user=user
             ).exclude(pk=self.instance.pk if self.instance else None).exists():
                 raise serializers.ValidationError(
-                    {"user": "This user is already a member of this team"}
+                    {"user": "User is already a team member"}
                 )
-
         return data

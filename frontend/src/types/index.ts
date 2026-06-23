@@ -49,7 +49,6 @@ export interface Task {
   assigned_username: string | null;
   due_date: string | null;
   estimated_hours: string;
-  actual_hours: string;
   created_at: string;
 }
 
@@ -109,7 +108,6 @@ export interface ProjectReport {
   progress: number;
   todo: number;
   estimated_hours: number;
-  actual_hours: number;
 }
 
 export type ToastType = "success" | "error" | "info";

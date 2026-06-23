@@ -11,9 +11,10 @@ import EmptyState from "../../components/EmptyState";
 import { SkeletonCard } from "../../components/SkeletonLoader";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
 import { validateProjectName } from "../../utils/validation";
 
-type Project = { id: number; name: string; description: string };
+type Project = { id: number; name: string; description: string; owner: number };
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -28,6 +29,7 @@ export default function ProjectsPage() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { profile } = useAuth();
 
   useEffect(() => {
     const load = async () => {
@@ -146,14 +148,16 @@ export default function ProjectsPage() {
                   >
                     Open Project <ExternalLink size={11} />
                   </button>
-                  <button
-                    title="Delete project"
-                    onClick={() => setConfirmDelete(project.id)}
-                    disabled={deleting === project.id}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {deleting === project.id ? <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-400 border-t-transparent" /> : <Trash2 size={14} />}
-                  </button>
+                  {profile?.user_id === project.owner && (
+                    <button
+                      title="Delete project"
+                      onClick={() => setConfirmDelete(project.id)}
+                      disabled={deleting === project.id}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deleting === project.id ? <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-400 border-t-transparent" /> : <Trash2 size={14} />}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

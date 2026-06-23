@@ -59,6 +59,14 @@ class Task(models.Model):
         blank=True
     )
 
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_tasks"
+    )
+
     due_date = models.DateField(
         null=True,
         blank=True

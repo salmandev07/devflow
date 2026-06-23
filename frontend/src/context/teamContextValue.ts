@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-export type Team = { id: number; name: string; owner: number; members: number[] };
+export type Team = { id: number; name: string; owner: number; project: number | null; project_name?: string; members: number[] };
 
 export interface TeamContextType {
   teams: Team[];

@@ -10,7 +10,13 @@ const getAuthHeader = () => ({
   },
 });
 
-type UserData = { id: number; username: string };
+export type UserData = {
+  id: number;
+  username: string;
+  avatar: string | null;
+  full_name: string;
+  position: string;
+};
 
 export const getUsers = async (): Promise<UserData[]> => {
   const response = await axios.get(API_URL, getAuthHeader());

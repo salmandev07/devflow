@@ -1,19 +1,16 @@
 import { Link, NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Users, CheckSquare,
-  Columns3, Bell, FileText, ChevronLeft, ChevronRight, Zap, LogOut,
+  Columns3, Bell, FileText, ChevronLeft, ChevronRight, Zap, LogOut, Settings,
 } from "lucide-react";
 import Avatar from "./Avatar";
+import { useAuth } from "../context/AuthContext";
 
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
-}
-
-function getUsername(): string {
-  return localStorage.getItem("username") || "User";
 }
 
 function getRole(): string {
@@ -28,16 +25,22 @@ const navItems = [
   { href: "/kanban",    label: "Kanban",    Icon: Columns3 },
   { href: "/notifications", label: "Notifications", Icon: Bell },
   { href: "/reports",   label: "Reports",   Icon: FileText },
+  { href: "/settings",  label: "Settings",  Icon: Settings },
 ];
 
 export default function Sidebar({
   collapsed, onToggleCollapse, mobileOpen, onMobileClose,
 }: SidebarProps) {
-  const username = getUsername();
+  const { profile } = useAuth();
+  const displayName = profile?.full_name || localStorage.getItem("full_name") || localStorage.getItem("username") || "User";
+  const position = profile?.position || localStorage.getItem("position") || "";
+  const avatarUrl = profile?.avatar || localStorage.getItem("avatar");
   const role = getRole();
 
   const handleLogout = () => {
+    const savedTheme = localStorage.getItem("theme");
     localStorage.clear();
+    if (savedTheme) localStorage.setItem("theme", savedTheme);
     window.location.href = "/";
   };
 
@@ -55,7 +58,9 @@ export default function Sidebar({
       >
         <SidebarContent
           collapsed={collapsed}
-          username={username}
+          displayName={displayName}
+          position={position}
+          avatarUrl={avatarUrl}
           role={role}
           onToggleCollapse={onToggleCollapse}
           onLogout={handleLogout}
@@ -75,7 +80,9 @@ export default function Sidebar({
       >
         <SidebarContent
           collapsed={false}
-          username={username}
+          displayName={displayName}
+          position={position}
+          avatarUrl={avatarUrl}
           role={role}
           onToggleCollapse={onMobileClose}
           onLogout={handleLogout}
@@ -87,10 +94,12 @@ export default function Sidebar({
 }
 
 function SidebarContent({
-  collapsed, username, role, onToggleCollapse, onLogout, isMobile = false,
+  collapsed, displayName, position, avatarUrl, role, onToggleCollapse, onLogout, isMobile = false,
 }: {
   collapsed: boolean;
-  username: string;
+  displayName: string;
+  position: string;
+  avatarUrl: string | null;
   role: string;
   onToggleCollapse: () => void;
   onLogout: () => void;
@@ -157,25 +166,28 @@ function SidebarContent({
       {/* User section */}
       <div className={`px-3 pt-3 border-t border-slate-200 dark:border-slate-800 mt-2`}>
         {!collapsed ? (
-          <div className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group">
-            <Avatar name={username} size="sm" />
+          <Link
+            to="/settings"
+            className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+          >
+            <Avatar name={displayName} src={avatarUrl} size="sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{username}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-500 truncate">{role}</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{displayName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-500 truncate">{position || role}</p>
             </div>
             <button
-              onClick={onLogout}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLogout(); }}
               title="Logout"
               className="p-1.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
             >
               <LogOut size={14} />
             </button>
-          </div>
+          </Link>
         ) : (
           <div className="flex justify-center">
-            <button onClick={onLogout} title="Logout" className="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-              <LogOut size={16} />
-            </button>
+            <Link to="/settings" title="Settings">
+              <Avatar name={displayName} src={avatarUrl} size="sm" />
+            </Link>
           </div>
         )}
       </div>

@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Play, Square, Clock, Calendar, User, FolderKanban, Users, AlertTriangle, Timer } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { getTask, startTimer, stopTimer, getTimerStatus, getTaskSessions } from "../../services/taskService";
+import { getTask, updateTask, startTimer, stopTimer, getTimerStatus, getTaskSessions } from "../../services/taskService";
+import { getProjects } from "../../services/projectService";
+import { useAuth } from "../../context/AuthContext";
 import TaskComments from "../../components/TaskComments";
 import TaskAttachments from "../../components/TaskAttachments";
 import TaskSubtasks from "../../components/TaskSubtasks";
@@ -14,9 +16,11 @@ import { useToast } from "../../hooks/useToast";
 
 type Task = {
   id: number; title: string; description: string; status: string; priority: string;
-  estimated_hours: number; actual_hours: number; due_date?: string | null;
+  project: number; team: number; assigned_to: number | null; created_by: number | null;
+  estimated_hours: number; due_date?: string | null;
   project_name?: string; team_name?: string; assigned_username?: string;
 };
+type Project = { id: number; name: string; owner: number };
 type TimeSession = { id: number; username: string; started_at: string; ended_at: string | null; duration_hours: string };
 
 function InfoRow({ icon: Icon, label, value, className = "" }: { icon: React.ElementType; label: string; value: string; className?: string }) {
@@ -32,28 +36,54 @@ function InfoRow({ icon: Icon, label, value, className = "" }: { icon: React.Ele
 export default function TaskDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [timerLoading, setTimerLoading] = useState(false);
   const [timerRunning, setTimerRunning] = useState(false);
   const [sessions, setSessions] = useState<TimeSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [data, status, sessionData] = await Promise.all([
-          getTask(Number(id)), getTimerStatus(Number(id)), getTaskSessions(Number(id)),
+        const [data, status, sessionData, projData] = await Promise.all([
+          getTask(Number(id)), getTimerStatus(Number(id)), getTaskSessions(Number(id)), getProjects(),
         ]);
-        setTask(data); setTimerRunning(status.running); setSessions(sessionData);
+        setTask(data); setTimerRunning(status.running); setSessions(sessionData); setProjects(projData);
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
     void load();
   }, [id]);
 
-  const efficiency = task?.estimated_hours && task.estimated_hours > 0
-    ? Math.round((task.actual_hours / task.estimated_hours) * 100) : 0;
+  const isOwner = () => {
+    if (!task || !profile) return false;
+    if (task.created_by === profile.user_id) return true;
+    const project = projects.find((p) => p.id === task.project);
+    return project?.owner === profile.user_id;
+  };
+
+  const isAssignee = () => {
+    return task && profile && task.assigned_to === profile.user_id;
+  };
+
+  const canEdit = isOwner() || isAssignee();
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!task || statusUpdating) return;
+    setStatusUpdating(true);
+    try {
+      const updated = await updateTask(task.id, { status: newStatus });
+      setTask(updated);
+      addToast("success", "Status updated");
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      addToast("error", axiosErr.response?.data?.detail || "Failed to update status");
+    } finally { setStatusUpdating(false); }
+  };
 
   const handleStartTimer = async () => {
     if (!task) return;
@@ -155,19 +185,9 @@ export default function TaskDetailsPage() {
                   Stop
                 </Button>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/30 p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100 tabular-nums">{task.estimated_hours}h</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">Estimated</p>
-                </div>
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/30 p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100 tabular-nums">{task.actual_hours}h</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">Actual</p>
-                </div>
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/30 p-3 text-center">
-                  <p className={`text-lg font-bold tabular-nums ${efficiency > 100 ? "text-rose-400" : "text-emerald-400"}`}>{efficiency}%</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">Utilization</p>
-                </div>
+              <div className="rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/30 p-3 text-center">
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 tabular-nums">{task.estimated_hours}h</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">Estimated</p>
               </div>
             </div>
 
@@ -219,9 +239,35 @@ export default function TaskDetailsPage() {
                 <InfoRow icon={Calendar} label="Due Date" value={task.due_date ?? "No due date"}
                   className={isOverdue ? "text-rose-400" : ""} />
                 <InfoRow icon={Clock} label="Estimated" value={`${task.estimated_hours}h`} />
-                <InfoRow icon={Clock} label="Actual" value={`${task.actual_hours}h`} />
               </div>
             </div>
+
+            {/* Status control — available to owner and assigned user */}
+            {canEdit && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Update Status</h3>
+                <div className="flex gap-2">
+                  {["todo", "progress", "done"].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusChange(s)}
+                      disabled={task.status === s || statusUpdating}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                        task.status === s
+                          ? s === "done"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : s === "progress"
+                            ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                            : "bg-slate-500/15 text-slate-400 border border-slate-500/30"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700"
+                      }`}
+                    >
+                      {s === "todo" ? "Todo" : s === "progress" ? "In Progress" : "Done"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

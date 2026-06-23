@@ -32,16 +32,17 @@ class TaskSerializer(serializers.ModelSerializer):
             "team_name",
             "assigned_to",
             "assigned_username",
+            "created_by",
             "due_date",
             "estimated_hours",
-            "actual_hours",
             "created_at",
         ]
+        read_only_fields = ["created_by"]
 
     def validate_project(self, value):
+        user = self.context["request"].user
         if not Project.objects.filter(
-            Q(owner=self.context["request"].user)
-            | Q(teams__members=self.context["request"].user),
+            Q(owner=user) | Q(teams__members=user),
             id=value.id,
         ).exists():
             raise serializers.ValidationError(
@@ -51,19 +52,24 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate_team(self, value):
         if value is not None:
+            user = self.context["request"].user
             project_data = self.initial_data.get("project")
             if project_data:
                 try:
                     project = Project.objects.get(id=project_data)
-                    if not project.teams.filter(id=value.id).exists():
+                    # Accept if team is linked via M2M (ProjectTeam) OR via direct FK
+                    is_in_project = (
+                        project.teams.filter(id=value.id).exists()
+                        or value.project_id == project.id
+                    )
+                    if not is_in_project:
                         raise serializers.ValidationError(
                             "Team is not assigned to this project"
                         )
                 except Project.DoesNotExist:
                     pass
             if not Team.objects.filter(
-                Q(owner=self.context["request"].user)
-                | Q(members=self.context["request"].user),
+                Q(owner=user) | Q(members=user),
                 id=value.id,
             ).exists():
                 raise serializers.ValidationError(
@@ -74,6 +80,8 @@ class TaskSerializer(serializers.ModelSerializer):
     def validate_assigned_to(self, value):
         if value is None:
             return value
+
+        user = self.context["request"].user
 
         if value.is_superuser:
             raise serializers.ValidationError(
@@ -100,14 +108,25 @@ class TaskSerializer(serializers.ModelSerializer):
         except ProjectModel.DoesNotExist:
             raise serializers.ValidationError("Project not found")
 
-        team_ids = project_obj.teams.values_list("id", flat=True)
-        if not team_ids:
+        # Only project owner can assign tasks
+        if project_obj.owner != user:
+            raise serializers.ValidationError(
+                "Only the project owner can assign tasks"
+            )
+
+        team_ids = list(project_obj.teams.values_list("id", flat=True))
+        # Also include teams linked via direct FK
+        direct_team_ids = list(Team.objects.filter(
+            project_id=project_obj.id
+        ).values_list("id", flat=True))
+        all_team_ids = list(set(team_ids + direct_team_ids))
+        if not all_team_ids:
             raise serializers.ValidationError(
                 "Cannot assign user: project has no teams assigned"
             )
 
         is_member = Team.objects.filter(
-            Q(id__in=team_ids) & Q(members=value)
+            Q(id__in=all_team_ids) & Q(members=value)
         ).exists()
 
         if not is_member:

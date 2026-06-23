@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
 import { normalizeList } from "../utils/pagination";
+import type { TeamData } from "./teamService";
 
 const API_URL = `${API_BASE_URL}/projects/`;
 
@@ -15,7 +16,7 @@ const getAuthHeader = () => {
   };
 };
 
-export type ProjectData = { id: number; name: string; description: string; created_at: string };
+export type ProjectData = { id: number; name: string; owner: number; description: string; created_at: string };
 
 export const getProjects = async (): Promise<ProjectData[]> => {
   const response = await axios.get(
@@ -74,6 +75,26 @@ export const deleteProject = async (
     getAuthHeader()
   );
 
+  return response.data;
+};
+
+export const getProjectTeams = async (projectId: number): Promise<TeamData[]> => {
+  const response = await axios.get(
+    `${API_URL}${projectId}/teams/`,
+    getAuthHeader()
+  );
+  return normalizeList<TeamData>(response.data);
+};
+
+export const createProjectTeam = async (
+  projectId: number,
+  teamData: { name: string }
+) => {
+  const response = await axios.post(
+    `${API_URL}${projectId}/teams/create/`,
+    teamData,
+    getAuthHeader()
+  );
   return response.data;
 };
 

@@ -1,0 +1,79 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: devflow-postgres-prod
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: devflow_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+
+    volumes:
+      - devflow-postgres-data:/var/lib/postgresql/data
+
+    networks:
+      - devflow-network
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: devflow-backend-prod
+
+    env_file:
+      - ./backend/.env
+
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_started
+
+    volumes:
+      - devflow-media:/app/media
+
+    networks:
+      - devflow-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+
+    container_name: devflow-frontend-prod
+
+    restart: unless-stopped
+
+    networks:
+      - devflow-network
+
+  nginx:
+    image: nginx:alpine
+
+    container_name: devflow-nginx
+
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - devflow-media:/media:ro
+
+    depends_on:
+      - frontend
+      - backend
+
+    networks:
+      - devflow-network
+
+volumes:
+  devflow-postgres-data:
+  devflow-media:
+
+networks:
+  devflow-network:

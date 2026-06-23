@@ -1,5 +1,8 @@
+import { useState } from "react";
+
 interface AvatarProps {
   name?: string;
+  src?: string | null;
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
@@ -35,21 +38,34 @@ function getColor(name?: string): string {
   return colorSeeds[hash % colorSeeds.length];
 }
 
-export default function Avatar({ name, size = "sm", className = "" }: AvatarProps) {
+export default function Avatar({ name, src, size = "sm", className = "" }: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
   const initials = getInitials(name);
   const color = getColor(name);
+  const showImage = src && !imgError;
+
   return (
     <div
       className={`
-        ${sizeMap[size]} ${color}
+        ${sizeMap[size]} ${showImage ? "" : color}
         rounded-full flex items-center justify-center
         font-semibold text-white shrink-0
         ring-2 ring-white/20 dark:ring-slate-900
+        overflow-hidden
         ${className}
       `}
       title={name}
     >
-      {initials}
+      {showImage ? (
+        <img
+          src={src}
+          alt={name || "Avatar"}
+          className="h-full w-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        initials
+      )}
     </div>
   );
 }

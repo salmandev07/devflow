@@ -10,7 +10,7 @@ const getAuthHeader = () => ({
   },
 });
 
-export type TeamData = { id: number; name: string; owner: number; members: number[]; created_at: string };
+export type TeamData = { id: number; name: string; owner: number; project: number | null; project_name?: string; members: number[]; created_at: string };
 
 export const getTeams = async (): Promise<TeamData[]> => {
   const response = await axios.get(

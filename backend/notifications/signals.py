@@ -2,17 +2,11 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from comments.models import Comment
-
-from .models import Notification
+from .helpers import create_notification
 
 
 @receiver(post_save, sender=Comment)
-def comment_notification(
-    sender,
-    instance,
-    created,
-    **kwargs
-):
+def comment_notification(sender, instance, created, **kwargs):
     if not created:
         return
 
@@ -24,11 +18,10 @@ def comment_notification(
     if task.assigned_to == instance.user:
         return
 
-    Notification.objects.create(
+    create_notification(
+        actor=instance.user,
         user=task.assigned_to,
-        message=(
-            f"{instance.user.username} "
-            f"commented on "
-            f"{task.title}"
-        )
+        notification_type="comment_added",
+        message=f"{instance.user.username} commented on \"{task.title}\"",
+        url=f"/tasks/{task.id}",
     )

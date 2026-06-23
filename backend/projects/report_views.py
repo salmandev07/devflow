@@ -27,7 +27,6 @@ class ProjectReportView(APIView):
         todo = tasks.filter(status="todo").count()
 
         estimated_hours = sum(task.estimated_hours for task in tasks)
-        actual_hours = sum(task.actual_hours for task in tasks)
 
         return Response({
             "project": project.name,
@@ -36,5 +35,4 @@ class ProjectReportView(APIView):
             "progress": progress,
             "todo": todo,
             "estimated_hours": estimated_hours,
-            "actual_hours": actual_hours,
         })

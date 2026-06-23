@@ -6,6 +6,7 @@ import { getTasks, createTask, updateTask, deleteTask } from "../../services/tas
 import { getProjects } from "../../services/projectService";
 import { getTeams } from "../../services/teamService";
 import { getTeamMembers } from "../../services/teamMembershipService";
+import { useAuth } from "../../context/AuthContext";
 import Modal from "../../components/Modal";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
@@ -21,11 +22,11 @@ import { validateTaskTitle } from "../../utils/validation";
 type Task = {
   id: number; title: string; description: string; status: string; priority: string;
   project: number; project_name?: string; team: number; team_name?: string;
-  assigned_to: number | null; assigned_username?: string;
-  estimated_hours: number; actual_hours: number; due_date: string | null;
+  assigned_to: number | null; assigned_username?: string; created_by: number | null;
+  estimated_hours: number; due_date: string | null;
 };
-type Project = { id: number; name: string };
-type Team = { id: number; name: string };
+type Project = { id: number; name: string; owner: number };
+type Team = { id: number; name: string; owner: number };
 type TeamMembership = { id: number; user: number; username: string; role: string };
 
 function SelectField({ label, value, onChange, children, disabled }: {
@@ -54,6 +55,7 @@ function formatDate(d: string | null) {
 }
 
 export default function TasksPage() {
+  const { profile } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -75,7 +77,6 @@ export default function TasksPage() {
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedTeam, setSelectedTeam] = useState("");
   const [estimatedHours, setEstimatedHours] = useState("");
-  const [actualHours, setActualHours] = useState("");
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,10 +111,26 @@ export default function TasksPage() {
     void loadMembers();
   }, [selectedTeam]);
 
+  // Helper: is user owner of the project, team, or task creator?
+  const isOwner = (task: Task) => {
+    if (!profile) return false;
+    if (task.created_by === profile.user_id) return true;
+    const project = projects.find((p) => p.id === task.project);
+    if (project && project.owner === profile.user_id) return true;
+    const team = teams.find((t) => t.id === task.team);
+    if (team && team.owner === profile.user_id) return true;
+    return false;
+  };
+
+  // Helper: is user assigned to this task?
+  const isAssignee = (task: Task) => {
+    return profile?.user_id != null && task.assigned_to === profile.user_id;
+  };
+
   const resetForm = () => {
     setTitle(""); setDescription(""); setPriority("medium");
     setAssignedTo(null); setDueDate(""); setSelectedProject("");
-    setSelectedTeam(""); setEstimatedHours(""); setActualHours("");
+    setSelectedTeam(""); setEstimatedHours("");
     setEditingTask(null); setFormError("");
   };
 
@@ -126,7 +143,6 @@ export default function TasksPage() {
     setSelectedProject(String(task.project));
     setSelectedTeam(String(task.team));
     setEstimatedHours(String(task.estimated_hours));
-    setActualHours(String(task.actual_hours));
     setModalOpen(true);
   };
 
@@ -139,12 +155,16 @@ export default function TasksPage() {
     setFormError("");
     try {
       if (editingTask) {
-        await updateTask(editingTask.id, {
+        const payload: Record<string, unknown> = {
           title, description, priority,
-          due_date: dueDate || null, assigned_to: assignedTo,
+          due_date: dueDate || null,
           estimated_hours: Number(estimatedHours) || 0,
-          actual_hours: Number(actualHours) || 0,
-        });
+        };
+        // Only owner can change assignee
+        if (isOwner(editingTask)) {
+          payload.assigned_to = assignedTo;
+        }
+        await updateTask(editingTask.id, payload);
         addToast("success", "Task updated successfully");
       } else {
         await createTask({
@@ -153,7 +173,6 @@ export default function TasksPage() {
           project: Number(selectedProject), team: Number(selectedTeam),
           assigned_to: assignedTo,
           estimated_hours: Number(estimatedHours) || 0,
-          actual_hours: Number(actualHours) || 0,
         });
         addToast("success", "Task created successfully");
       }
@@ -188,7 +207,12 @@ export default function TasksPage() {
       await deleteTask(id);
       setTasks((prev) => prev.filter((t) => t.id !== id));
       addToast("success", "Task deleted successfully");
-    } catch (err) { addToast("error", "Failed to delete task"); console.error(err); }
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      const msg = axiosErr.response?.data?.detail || "Failed to delete task";
+      addToast("error", msg);
+      console.error(err);
+    }
     finally { setDeleting(false); setConfirmDeleteId(null); }
   };
 
@@ -211,11 +235,11 @@ export default function TasksPage() {
         <PageHeader
           title="Tasks"
           subtitle={`${tasks.length} task${tasks.length !== 1 ? "s" : ""} total`}
-          action={
+          action={projects.some(p => p.owner === profile?.user_id) ? (
             <Button variant="primary" size="md" icon={<Plus size={15} />} onClick={openCreate}>
               New Task
             </Button>
-          }
+          ) : undefined}
         />
 
         {/* Filter bar */}
@@ -255,7 +279,7 @@ export default function TasksPage() {
           <EmptyState icon={<CheckSquare size={24} />}
             title={searchTerm || activeFilters > 0 ? "No tasks match your filters" : "No tasks yet"}
             description={searchTerm || activeFilters > 0 ? "Adjust your filters or search term" : "Create your first task to start tracking work"}
-            action={!searchTerm && activeFilters === 0 ? (
+            action={!searchTerm && activeFilters === 0 && projects.some(p => p.owner === profile?.user_id) ? (
               <Button variant="primary" size="sm" icon={<Plus size={13} />} onClick={openCreate}>New Task</Button>
             ) : undefined}
           />
@@ -271,6 +295,10 @@ export default function TasksPage() {
             <div className="divide-y divide-slate-800/60">
               {filtered.map((task) => {
                 const overdue = task.due_date && new Date(task.due_date) < now && task.status !== "done";
+                const taskOwner = isOwner(task);
+                const taskAssignee = isAssignee(task);
+                const showEdit = taskOwner || taskAssignee;
+                const showDelete = taskOwner;
                 return (
                   <div key={task.id}
                     className="group grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-3 items-center px-5 py-3.5 hover:bg-slate-100 dark:hover:bg-slate-800/40 transition-colors">
@@ -309,14 +337,18 @@ export default function TasksPage() {
                         title="Open" className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <ExternalLink size={13} />
                       </button>
-                      <button onClick={() => openEdit(task)}
-                        title="Edit" className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors">
-                        <Pencil size={13} />
-                      </button>
-                      <button onClick={() => setConfirmDeleteId(task.id)}
-                        title="Delete" className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-                        <Trash2 size={13} />
-                      </button>
+                      {showEdit && (
+                        <button onClick={() => openEdit(task)}
+                          title="Edit" className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors">
+                          <Pencil size={13} />
+                        </button>
+                      )}
+                      {showDelete && (
+                        <button onClick={() => setConfirmDeleteId(task.id)}
+                          title="Delete" className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -356,8 +388,12 @@ export default function TasksPage() {
               <option value="">Select Team</option>
               {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </SelectField>
-            <SelectField label="Assignee" value={assignedTo != null ? String(assignedTo) : ""}
-              onChange={(v) => setAssignedTo(v ? Number(v) : null)}>
+            <SelectField
+              label="Assignee"
+              value={assignedTo != null ? String(assignedTo) : ""}
+              onChange={(v) => setAssignedTo(v ? Number(v) : null)}
+              disabled={!!editingTask && !isOwner(editingTask)}
+            >
               <option value="">Unassigned</option>
               {teamMembers.map((m) => <option key={m.id} value={m.user}>{m.username}</option>)}
             </SelectField>
@@ -366,8 +402,6 @@ export default function TasksPage() {
             <Input label="Due Date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             <Input label="Est. Hours" type="number" placeholder="0" value={estimatedHours}
               onChange={(e) => setEstimatedHours(e.target.value)} />
-            <Input label="Actual Hours" type="number" placeholder="0" value={actualHours}
-              onChange={(e) => setActualHours(e.target.value)} />
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="ghost" onClick={() => { setModalOpen(false); resetForm(); }}>Cancel</Button>

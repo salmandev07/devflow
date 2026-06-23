@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Zap, User, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Sun, Moon } from "lucide-react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
@@ -26,8 +26,8 @@ export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const strength = getPasswordStrength(password);
 
@@ -47,10 +47,17 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await registerUser({ username, email, password });
-      setSuccess(true);
-      setTimeout(() => { window.location.href = "/"; }, 1500);
-    } catch {
-      setError("Registration failed. Username or email may already be taken.");
+      navigate("/verify-email", { state: { username, email } });
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: Record<string, string[]> } };
+      const data = axiosErr.response?.data;
+      if (data?.username) {
+        setError(`Username "${username}" is already taken.`);
+      } else if (data?.email) {
+        setError(`Email "${email}" is already registered.`);
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -117,12 +124,6 @@ export default function RegisterPage() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create your account</h2>
             <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">Join DevFlow and start managing projects</p>
           </div>
-
-          {success && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-400">
-              Account created! Redirecting to login…
-            </div>
-          )}
 
           {error && (
             <div className="mb-4 px-4 py-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-sm text-rose-400">

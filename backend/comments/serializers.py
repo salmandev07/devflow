@@ -23,4 +23,5 @@ class CommentSerializer(
         ]
         read_only_fields = [
             "user",
+            "task",
         ]

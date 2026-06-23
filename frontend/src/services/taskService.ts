@@ -13,8 +13,8 @@ const getAuthHeader = () => ({
 export type TaskData = {
   id: number; title: string; description: string; status: string; priority: string;
   project: number; project_name?: string; team: number; team_name?: string;
-  assigned_to: number | null; assigned_to_username?: string;
-  estimated_hours: number; actual_hours: number; due_date: string | null;
+  assigned_to: number | null; assigned_to_username?: string; created_by: number | null;
+  estimated_hours: number; due_date: string | null;
 };
 
 export const getTasks = async (): Promise<TaskData[]> => {
@@ -36,7 +36,6 @@ export const createTask = async (
     due_date: string | null;
     assigned_to: number | null;
     estimated_hours: number;
-    actual_hours: number;
   }
 ) => {
   const response = await axios.post(

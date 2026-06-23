@@ -5,6 +5,7 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from tasks.models import Task
 from activities.models import Activity
+from notifications.helpers import create_notification
 from .models import Subtask
 from .serializers import SubtaskSerializer
 
@@ -80,6 +81,15 @@ class SubtaskDetailView(generics.RetrieveUpdateDestroyAPIView):
                 team=subtask.task.team,
                 message=f"Completed subtask '{subtask.title}'"
             )
+            task = subtask.task
+            if task.assigned_to and task.assigned_to != self.request.user:
+                create_notification(
+                    actor=self.request.user,
+                    user=task.assigned_to,
+                    notification_type="subtask_completed",
+                    message=f"{self.request.user.username} completed subtask \"{subtask.title}\" on \"{task.title}\"",
+                    url=f"/tasks/{task.id}",
+                )
 
     def perform_destroy(self, instance):
         Activity.objects.create(

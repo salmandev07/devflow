@@ -11,6 +11,14 @@ class Team(models.Model):
         related_name="owned_teams"
     )
 
+    project = models.ForeignKey(
+        "projects.Project",
+        on_delete=models.CASCADE,
+        related_name="project_teams_direct",
+        null=True,
+        blank=True,
+    )
+
     members = models.ManyToManyField(
         User,
         related_name="teams"
