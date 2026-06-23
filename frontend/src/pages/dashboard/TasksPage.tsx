@@ -150,6 +150,7 @@ export default function TasksPage() {
     const titleError = validateTaskTitle(title);
     if (titleError) { setFormError(titleError); return; }
     if (!editingTask && !selectedProject) { setFormError("Please select a project"); return; }
+    if (!editingTask && !selectedTeam) { setFormError("Please select a team"); return; }
     setSaving(true);
     setFormError("");
     try {
@@ -169,7 +170,7 @@ export default function TasksPage() {
         await createTask({
           title, description, priority,
           due_date: dueDate || null,
-          project: Number(selectedProject), team: selectedTeam ? Number(selectedTeam) : null,
+          project: Number(selectedProject), team: Number(selectedTeam),
           assigned_to: assignedTo,
           estimated_hours: Number(estimatedHours) || 0,
         });
@@ -383,8 +384,8 @@ export default function TasksPage() {
               <option value="">Select Project</option>
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </SelectField>
-            <SelectField label="Team (Optional)" value={selectedTeam} onChange={setSelectedTeam} disabled={!!editingTask}>
-              <option value="">No Team</option>
+            <SelectField label="Team" value={selectedTeam} onChange={setSelectedTeam} disabled={!!editingTask}>
+              <option value="">Select Team</option>
               {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </SelectField>
             <SelectField
